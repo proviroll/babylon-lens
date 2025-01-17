@@ -45,7 +45,15 @@ const CopyButton = ({ text }: { text: string }) => {
 };
 
 export default function Home() {
-  const { data: validatorData, isLoading } = api.validator.getAll.useQuery();
+  const { data: validatorData, isLoading } = api.validator.getAll.useQuery(
+    undefined,
+    {
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      staleTime: Infinity,
+      cacheTime: Infinity,
+    },
+  );
   const [filter, setFilter] = useState<
     "all" | "jailed" | "active" | "inactive"
   >("all");
@@ -163,8 +171,8 @@ export default function Home() {
                     <Badge
                       className={
                         validator.status === "BOND_STATUS_BONDED"
-                          ? "w-20 bg-green-100 text-green-800"
-                          : "w-20 bg-red-100 text-red-800"
+                          ? "w-24 bg-green-100 text-green-800"
+                          : "w-24 bg-red-100 text-red-800"
                       }
                     >
                       {validator.status === "BOND_STATUS_BONDED" ? (
@@ -185,8 +193,8 @@ export default function Home() {
                       variant="outline"
                       className={
                         validator.jailed
-                          ? "w-20 bg-red-100 text-red-800"
-                          : "w-20 bg-green-300 text-green-800"
+                          ? "w-24 bg-red-100 text-red-800"
+                          : "w-24 bg-green-300 text-green-800"
                       }
                     >
                       {validator.jailed ? "Yes" : "No"}

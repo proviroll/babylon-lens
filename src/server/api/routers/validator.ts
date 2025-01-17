@@ -1,9 +1,7 @@
 import * as grpc from "@grpc/grpc-js";
 import * as protobuf from "protobufjs";
-import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
-// Define the protobuf message types
 const root = protobuf.Root.fromJSON({
   nested: {
     cosmos: {
@@ -12,6 +10,18 @@ const root = protobuf.Root.fromJSON({
           nested: {
             v1beta1: {
               nested: {
+                QueryValidatorsRequest: {
+                  fields: {
+                    status: {
+                      type: "string",
+                      id: 1,
+                    },
+                    pagination: {
+                      type: "cosmos.base.query.v1beta1.PageRequest",
+                      id: 2,
+                    },
+                  },
+                },
                 QueryValidatorsResponse: {
                   fields: {
                     validators: {
@@ -133,6 +143,38 @@ const root = protobuf.Root.fromJSON({
                     },
                   },
                 },
+                PageRequest: {
+                  fields: {
+                    key: {
+                      type: "bytes",
+                      id: 1,
+                    },
+                    offset: {
+                      type: "uint64",
+                      id: 2,
+                    },
+                    limit: {
+                      type: "uint64",
+                      id: 3,
+                    },
+                    countTotal: {
+                      type: "bool",
+                      id: 4,
+                    },
+                  },
+                },
+                PageResponse: {
+                  fields: {
+                    nextKey: {
+                      type: "bytes",
+                      id: 1,
+                    },
+                    total: {
+                      type: "uint64",
+                      id: 2,
+                    },
+                  },
+                },
               },
             },
           },
@@ -143,6 +185,26 @@ const root = protobuf.Root.fromJSON({
               nested: {
                 v1beta1: {
                   nested: {
+                    PageRequest: {
+                      fields: {
+                        key: {
+                          type: "bytes",
+                          id: 1,
+                        },
+                        offset: {
+                          type: "uint64",
+                          id: 2,
+                        },
+                        limit: {
+                          type: "uint64",
+                          id: 3,
+                        },
+                        countTotal: {
+                          type: "bool",
+                          id: 4,
+                        },
+                      },
+                    },
                     PageResponse: {
                       fields: {
                         nextKey: {
@@ -198,96 +260,71 @@ const root = protobuf.Root.fromJSON({
   },
 });
 
-// Update the validator response type to match the actual API schema
-const ValidatorResponse = z.object({
-  validators: z.array(
-    z.object({
-      operatorAddress: z.string(),
-      consensusPubkey: z.object({
-        "@type": z.string(),
-        key: z.string(),
-      }),
-      status: z.string(),
-      tokens: z.string(),
-      delegatorShares: z.string(),
-      description: z.object({
-        moniker: z.string(),
-        identity: z.string().optional(),
-        website: z.string().optional(),
-        securityContact: z.string().optional(),
-        details: z.string().optional(),
-      }),
-      unbondingTime: z.string(),
-      commission: z.object({
-        commissionRates: z.object({
-          rate: z.string(),
-          maxRate: z.string(),
-          maxChangeRate: z.string(),
-        }),
-        updateTime: z.string(),
-      }),
-      minSelfDelegation: z.string(),
-      jailed: z.boolean().optional(),
-    }),
-  ),
-  pagination: z.object({
-    nextKey: z.string().nullable(),
-    total: z.string(),
-  }),
-});
-
 export const validatorRouter = createTRPCRouter({
   getAll: publicProcedure.query(async () => {
-    return new Promise((resolve, reject) => {
+    try {
       const ServiceClient = grpc.makeGenericClientConstructor({}, "Query", {});
-
       const client = new ServiceClient(
         "babylon-testnet-grpc.polkachu.com:20690",
         grpc.credentials.createInsecure(),
       );
 
-      client.makeUnaryRequest(
-        "/cosmos.staking.v1beta1.Query/Validators",
-        (value: unknown) => Buffer.from(""),
-        (value: Buffer) => value,
-        {
+      console.log("Fetching all validators in a single request");
+      const response = await new Promise((resolve, reject) => {
+        const RequestType = root.lookupType(
+          "cosmos.staking.v1beta1.QueryValidatorsRequest",
+        );
+        const message = RequestType.create({
           pagination: {
-            key: Buffer.from(""),
-            offset: "0",
-            limit: "100",
-            countTotal: true,
-            reverse: false,
+            limit: 1000,
           },
-        },
-        new grpc.Metadata(),
-        { deadline: Date.now() + 5000 },
-        (err, response) => {
-          if (err) {
-            console.error("gRPC error:", err);
-            reject(err);
-            return;
-          }
+        });
 
-          try {
-            // Decode the protobuf response
-            const ResponseType = root.lookupType(
-              "cosmos.staking.v1beta1.QueryValidatorsResponse",
-            );
-            const decodedMessage = ResponseType.decode(response);
-            const jsonMessage = ResponseType.toObject(decodedMessage, {
-              longs: String,
-              enums: String,
-              bytes: String,
-            });
+        client.makeUnaryRequest(
+          "/cosmos.staking.v1beta1.Query/Validators",
+          (value: unknown) => RequestType.encode(message).finish(),
+          (value: Buffer) => value,
+          {},
+          new grpc.Metadata(),
+          { deadline: Date.now() + 10000 },
+          (err, response) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve(response);
+          },
+        );
+      });
 
-            console.log("Decoded response:", jsonMessage);
-            resolve(jsonMessage);
-          } catch (err) {
-            console.error("Parsing error:", err);
-            reject(err);
-          }
-        },
+      const ResponseType = root.lookupType(
+        "cosmos.staking.v1beta1.QueryValidatorsResponse",
       );
-    });
+      const decodedMessage = ResponseType.decode(response);
+      const jsonMessage = ResponseType.toObject(decodedMessage, {
+        longs: String,
+        enums: String,
+        bytes: String,
+      });
+
+      const uniqueValidators = new Set(
+        jsonMessage.validators.map((v) => v.operatorAddress),
+      ).size;
+
+      console.log(
+        `Total validators fetched: ${jsonMessage.validators.length}/${jsonMessage.pagination.total} (${uniqueValidators} unique)`,
+      );
+
+      return {
+        validators: jsonMessage.validators,
+        pagination: {
+          nextKey: null,
+          total: jsonMessage.pagination.total,
+        },
+      };
+    } catch (error) {
+      console.error("Error fetching validators:", error);
+      throw error;
+    }
   }),
 });
