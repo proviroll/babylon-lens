@@ -1,7 +1,13 @@
 "use client";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -11,71 +17,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowUpDown, CheckCircle, Clock, Copy, XCircle } from "lucide-react";
-
-// Mock data
-const validators = [
-  {
-    name: "Validator Alpha",
-    address: "rdx1qsp...8j4m3",
-    totalStake: "2,450,000 XRD",
-    ownerStake: "245,000 XRD",
-    apy: "11.2%",
-    fee: "2%",
-    uptime: "99.98%",
-    timespan: "30d",
-    acceptingStake: true,
-    jailed: false,
-  },
-  {
-    name: "Validator Beta",
-    address: "rdx1abc...9k2n4",
-    totalStake: "1,890,000 XRD",
-    ownerStake: "189,000 XRD",
-    apy: "10.8%",
-    fee: "2.5%",
-    uptime: "99.95%",
-    timespan: "30d",
-    acceptingStake: true,
-    jailed: true,
-  },
-  {
-    name: "Validator Gamma",
-    address: "rdx1xyz...5m7p8",
-    totalStake: "3,200,000 XRD",
-    ownerStake: "320,000 XRD",
-    apy: "10.5%",
-    fee: "1.8%",
-    uptime: "99.99%",
-    timespan: "30d",
-    acceptingStake: false,
-    jailed: false,
-  },
-  {
-    name: "Validator Delta",
-    address: "rdx1def...2h6j9",
-    totalStake: "1,750,000 XRD",
-    ownerStake: "175,000 XRD",
-    apy: "11.5%",
-    fee: "2.2%",
-    uptime: "99.90%",
-    timespan: "30d",
-    acceptingStake: true,
-    jailed: false,
-  },
-  {
-    name: "Validator Epsilon",
-    address: "rdx1ghi...4n8r3",
-    totalStake: "2,900,000 XRD",
-    ownerStake: "290,000 XRD",
-    apy: "10.9%",
-    fee: "2.1%",
-    uptime: "99.97%",
-    timespan: "30d",
-    acceptingStake: false,
-    jailed: false,
-  },
-];
+import { api } from "@/trpc/react";
+import { ArrowUpDown, CheckCircle, Copy, XCircle } from "lucide-react";
+import { useState } from "react";
 
 const CopyButton = ({ text }: { text: string }) => {
   const { toast } = useToast();
@@ -101,10 +45,70 @@ const CopyButton = ({ text }: { text: string }) => {
 };
 
 export default function Home() {
+  const { data: validatorData, isLoading } = api.validator.getAll.useQuery();
+  const [filter, setFilter] = useState<
+    "all" | "jailed" | "active" | "inactive"
+  >("all");
+
+  // Calculate counts for each filter
+  const counts = {
+    all: validatorData?.validators.length ?? 0,
+    jailed: validatorData?.validators.filter((v) => v.jailed).length ?? 0,
+    active:
+      validatorData?.validators.filter((v) => v.status === "BOND_STATUS_BONDED")
+        .length ?? 0,
+    inactive:
+      validatorData?.validators.filter((v) => v.status !== "BOND_STATUS_BONDED")
+        .length ?? 0,
+  };
+
+  const formatTokens = (tokens: string) => {
+    const amount = Number(tokens) / 1e6;
+    return new Intl.NumberFormat("en-US").format(amount);
+  };
+
+  const calculateAPY = (commission: string) => {
+    const rate = Number(commission) / 1e18;
+    return ((1 - rate) * 0.12 * 100).toFixed(2);
+  };
+
+  const filteredValidators = validatorData?.validators.filter((validator) => {
+    switch (filter) {
+      case "jailed":
+        return validator.jailed;
+      case "active":
+        return validator.status === "BOND_STATUS_BONDED";
+      case "inactive":
+        return validator.status !== "BOND_STATUS_BONDED";
+      default:
+        return true;
+    }
+  });
+
+  if (isLoading) return <div>Loading...</div>;
+
   return (
     <main className="mx-auto my-48 flex min-h-screen max-w-6xl flex-col">
       <div className="container mx-auto">
-        <h1 className="mb-8 text-3xl font-bold">Network Staking</h1>
+        <div className="mb-8 flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Network Staking</h1>
+          <Select
+            value={filter}
+            onValueChange={(value: typeof filter) => setFilter(value)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter validators" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Validators ({counts.all})</SelectItem>
+              <SelectItem value="active">Active ({counts.active})</SelectItem>
+              <SelectItem value="inactive">
+                Inactive ({counts.inactive})
+              </SelectItem>
+              <SelectItem value="jailed">Jailed ({counts.jailed})</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
         <div className="rounded-lg border bg-card">
           <Table>
@@ -120,10 +124,6 @@ export default function Home() {
                   <ArrowUpDown className="ml-2 inline-block h-4 w-4" />
                 </TableHead>
                 <TableHead className="text-right">
-                  Owner Stake
-                  <ArrowUpDown className="ml-2 inline-block h-4 w-4" />
-                </TableHead>
-                <TableHead className="text-right">
                   APY
                   <ArrowUpDown className="ml-2 inline-block h-4 w-4" />
                 </TableHead>
@@ -131,59 +131,62 @@ export default function Home() {
                   Fee
                   <ArrowUpDown className="ml-2 inline-block h-4 w-4" />
                 </TableHead>
-                <TableHead className="text-right">
-                  Uptime
-                  <Clock className="ml-2 inline-block h-4 w-4" />
-                </TableHead>
                 <TableHead className="text-center">Status</TableHead>
                 <TableHead className="text-center">Jailed</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {validators.map((validator) => (
-                <TableRow key={validator.address}>
+              {filteredValidators?.map((validator) => (
+                <TableRow key={validator.operatorAddress}>
                   <TableCell className="font-medium">
-                    {validator.name}
+                    {validator.description.moniker}
                   </TableCell>
                   <TableCell className="font-mono text-sm">
-                    <div className="flex items-center gap-2">
-                      {validator.address}
-                      <CopyButton text={validator.address} />
+                    <div className="flex items-center gap-2 truncate text-blue-600">
+                      {validator.operatorAddress}
+                      <CopyButton text={validator.operatorAddress} />
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    {validator.totalStake}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {validator.ownerStake}
+                    {formatTokens(validator.tokens)} BBN
                   </TableCell>
                   <TableCell className="text-right text-green-600">
-                    {validator.apy}
+                    {calculateAPY(validator.commission.commissionRates.rate)}%
                   </TableCell>
-                  <TableCell className="text-right">{validator.fee}</TableCell>
                   <TableCell className="text-right">
-                    {validator.uptime}
+                    {(
+                      Number(validator.commission.commissionRates.rate) / 1e16
+                    ).toFixed(1)}
+                    %
                   </TableCell>
                   <TableCell className="text-center">
-                    {validator.acceptingStake ? (
-                      <Badge className="w-20 bg-green-100 text-green-800">
-                        <CheckCircle className="mr-1 inline-block h-4 w-4" />
-                        Active
-                      </Badge>
-                    ) : (
-                      <Badge className="w-20 bg-red-100 text-red-800">
-                        <XCircle className="mr-1 inline-block h-4 w-4" />
-                        Full
-                      </Badge>
-                    )}
+                    <Badge
+                      className={
+                        validator.status === "BOND_STATUS_BONDED"
+                          ? "w-20 bg-green-100 text-green-800"
+                          : "w-20 bg-red-100 text-red-800"
+                      }
+                    >
+                      {validator.status === "BOND_STATUS_BONDED" ? (
+                        <>
+                          <CheckCircle className="mr-1 inline-block h-4 w-4" />
+                          Active
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="mr-1 inline-block h-4 w-4" />
+                          Inactive
+                        </>
+                      )}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge
                       variant="outline"
                       className={
                         validator.jailed
-                          ? "w-20 bg-yellow-100 text-yellow-800"
-                          : "w-20 bg-gray-100 text-gray-800"
+                          ? "w-20 bg-red-100 text-red-800"
+                          : "w-20 bg-green-300 text-green-800"
                       }
                     >
                       {validator.jailed ? "Yes" : "No"}
