@@ -18,8 +18,13 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/trpc/react";
-import { ArrowUpDown, CheckCircle, Copy, XCircle } from "lucide-react";
+import { ArrowUpDown, CheckCircle, Copy, Search, XCircle } from "lucide-react";
 import { useState } from "react";
+
+const truncateAddress = (address: string) => {
+  if (!address) return "";
+  return `${address.slice(0, 6)}...${address.slice(-6)}`;
+};
 
 const CopyButton = ({ text }: { text: string }) => {
   const { toast } = useToast();
@@ -45,6 +50,15 @@ const CopyButton = ({ text }: { text: string }) => {
 };
 
 export default function Home() {
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<
+    "all" | "jailed" | "active" | "inactive"
+  >("all");
+  const [sort, setSort] = useState<{
+    column: "moniker" | "tokens" | "commission" | "apy" | null;
+    direction: "asc" | "desc";
+  }>({ column: null, direction: "asc" });
+
   const { data: validatorData, isLoading } = api.validator.getAll.useQuery(
     undefined,
     {
@@ -54,9 +68,6 @@ export default function Home() {
       cacheTime: Infinity,
     },
   );
-  const [filter, setFilter] = useState<
-    "all" | "jailed" | "active" | "inactive"
-  >("all");
 
   // Calculate counts for each filter
   const counts = {
@@ -81,17 +92,70 @@ export default function Home() {
   };
 
   const filteredValidators = validatorData?.validators.filter((validator) => {
-    switch (filter) {
-      case "jailed":
-        return validator.jailed;
-      case "active":
-        return validator.status === "BOND_STATUS_BONDED";
-      case "inactive":
-        return validator.status !== "BOND_STATUS_BONDED";
-      default:
-        return true;
-    }
+    // First apply status/jailed filter
+    const statusFilter =
+      filter === "all"
+        ? true
+        : filter === "jailed"
+          ? validator.jailed
+          : filter === "active"
+            ? validator.status === "BOND_STATUS_BONDED"
+            : validator.status !== "BOND_STATUS_BONDED";
+
+    // Then apply search filter
+    const searchFilter = search
+      ? validator.description.moniker
+          .toLowerCase()
+          .includes(search.toLowerCase())
+      : true;
+
+    return statusFilter && searchFilter;
   });
+
+  const sortValidators = (validators: typeof filteredValidators) => {
+    if (!validators || !sort.column) return validators;
+
+    return [...validators].sort((a, b) => {
+      const direction = sort.direction === "asc" ? 1 : -1;
+
+      switch (sort.column) {
+        case "moniker":
+          return (
+            direction *
+            a.description.moniker.localeCompare(b.description.moniker)
+          );
+        case "tokens":
+          return direction * (Number(a.tokens) - Number(b.tokens));
+        case "commission":
+          return (
+            direction *
+            (Number(a.commission.commissionRates.rate) -
+              Number(b.commission.commissionRates.rate))
+          );
+        case "apy":
+          return (
+            direction *
+            (Number(calculateAPY(a.commission.commissionRates.rate)) -
+              Number(calculateAPY(b.commission.commissionRates.rate)))
+          );
+        default:
+          return 0;
+      }
+    });
+  };
+
+  const sortedValidators = sortValidators(filteredValidators);
+
+  const toggleSort = (column: typeof sort.column) => {
+    if (sort.column === column) {
+      setSort((prev) => ({
+        ...prev,
+        direction: prev.direction === "asc" ? "desc" : "asc",
+      }));
+    } else {
+      setSort({ column, direction: "asc" });
+    }
+  };
 
   if (isLoading) return <div>Loading...</div>;
 
@@ -100,58 +164,85 @@ export default function Home() {
       <div className="container mx-auto">
         <div className="mb-8 flex items-center justify-between">
           <h1 className="text-3xl font-bold">Network Staking</h1>
-          <Select
-            value={filter}
-            onValueChange={(value: typeof filter) => setFilter(value)}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter validators" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Validators ({counts.all})</SelectItem>
-              <SelectItem value="active">Active ({counts.active})</SelectItem>
-              <SelectItem value="inactive">
-                Inactive ({counts.inactive})
-              </SelectItem>
-              <SelectItem value="jailed">Jailed ({counts.jailed})</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+              <input
+                type="text"
+                placeholder="Search validators..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-9 rounded-md border border-input py-1 pl-9 pr-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
+            <Select
+              value={filter}
+              onValueChange={(value: typeof filter) => setFilter(value)}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter validators" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  All Validators ({counts.all})
+                </SelectItem>
+                <SelectItem value="active">Active ({counts.active})</SelectItem>
+                <SelectItem value="inactive">
+                  Inactive ({counts.inactive})
+                </SelectItem>
+                <SelectItem value="jailed">Jailed ({counts.jailed})</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="rounded-lg border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[200px]">
+                <TableHead
+                  className="cursor-pointer hover:text-foreground"
+                  onClick={() => toggleSort("moniker")}
+                >
                   Validator
-                  <ArrowUpDown className="ml-2 inline-block h-4 w-4" />
+                  <ArrowUpDown className="ml-1 inline h-4 w-4" />
                 </TableHead>
-                <TableHead>Address</TableHead>
-                <TableHead className="text-right">
-                  Total Stake
-                  <ArrowUpDown className="ml-2 inline-block h-4 w-4" />
+                <TableHead className="w-full max-w-sm">Address</TableHead>
+                <TableHead
+                  className="cursor-pointer hover:text-foreground"
+                  onClick={() => toggleSort("tokens")}
+                >
+                  Tokens
+                  <ArrowUpDown className="ml-1 inline h-4 w-4" />
                 </TableHead>
-                <TableHead className="text-right">
+
+                <TableHead
+                  className="cursor-pointer hover:text-foreground"
+                  onClick={() => toggleSort("apy")}
+                >
                   APY
-                  <ArrowUpDown className="ml-2 inline-block h-4 w-4" />
+                  <ArrowUpDown className="ml-1 inline h-4 w-4" />
                 </TableHead>
-                <TableHead className="text-right">
-                  Fee
-                  <ArrowUpDown className="ml-2 inline-block h-4 w-4" />
+                <TableHead
+                  className="cursor-pointer hover:text-foreground"
+                  onClick={() => toggleSort("commission")}
+                >
+                  Commission
+                  <ArrowUpDown className="ml-1 inline h-4 w-4" />
                 </TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="text-center">Jailed</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Jailed</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredValidators?.map((validator) => (
+              {sortedValidators?.map((validator) => (
                 <TableRow key={validator.operatorAddress}>
                   <TableCell className="font-medium">
                     {validator.description.moniker}
                   </TableCell>
                   <TableCell className="font-mono text-sm">
-                    <div className="flex items-center gap-2 truncate text-blue-600">
-                      {validator.operatorAddress}
+                    <div className="flex max-w-sm items-center gap-2 truncate text-blue-600">
+                      {truncateAddress(validator.operatorAddress)}
                       <CopyButton text={validator.operatorAddress} />
                     </div>
                   </TableCell>
@@ -194,7 +285,7 @@ export default function Home() {
                       className={
                         validator.jailed
                           ? "w-24 bg-red-100 text-red-800"
-                          : "w-24 bg-green-300 text-green-800"
+                          : "w-24 bg-green-100 text-green-800"
                       }
                     >
                       {validator.jailed ? "Yes" : "No"}
