@@ -1,53 +1,200 @@
-import Link from "next/link";
+"use client";
 
-import { LatestPost } from "@/app/_components/post";
-import { api, HydrateClient } from "@/trpc/server";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { ArrowUpDown, CheckCircle, Clock, Copy, XCircle } from "lucide-react";
 
-export default async function Home() {
-  const hello = await api.post.hello({ text: "from tRPC" });
+// Mock data
+const validators = [
+  {
+    name: "Validator Alpha",
+    address: "rdx1qsp...8j4m3",
+    totalStake: "2,450,000 XRD",
+    ownerStake: "245,000 XRD",
+    apy: "11.2%",
+    fee: "2%",
+    uptime: "99.98%",
+    timespan: "30d",
+    acceptingStake: true,
+    jailed: false,
+  },
+  {
+    name: "Validator Beta",
+    address: "rdx1abc...9k2n4",
+    totalStake: "1,890,000 XRD",
+    ownerStake: "189,000 XRD",
+    apy: "10.8%",
+    fee: "2.5%",
+    uptime: "99.95%",
+    timespan: "30d",
+    acceptingStake: true,
+    jailed: true,
+  },
+  {
+    name: "Validator Gamma",
+    address: "rdx1xyz...5m7p8",
+    totalStake: "3,200,000 XRD",
+    ownerStake: "320,000 XRD",
+    apy: "10.5%",
+    fee: "1.8%",
+    uptime: "99.99%",
+    timespan: "30d",
+    acceptingStake: false,
+    jailed: false,
+  },
+  {
+    name: "Validator Delta",
+    address: "rdx1def...2h6j9",
+    totalStake: "1,750,000 XRD",
+    ownerStake: "175,000 XRD",
+    apy: "11.5%",
+    fee: "2.2%",
+    uptime: "99.90%",
+    timespan: "30d",
+    acceptingStake: true,
+    jailed: false,
+  },
+  {
+    name: "Validator Epsilon",
+    address: "rdx1ghi...4n8r3",
+    totalStake: "2,900,000 XRD",
+    ownerStake: "290,000 XRD",
+    apy: "10.9%",
+    fee: "2.1%",
+    uptime: "99.97%",
+    timespan: "30d",
+    acceptingStake: false,
+    jailed: false,
+  },
+];
 
-  void api.post.getLatest.prefetch();
+const CopyButton = ({ text }: { text: string }) => {
+  const { toast } = useToast();
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(text);
+    toast({
+      description: "Address copied to clipboard",
+      duration: 2000,
+    });
+  };
 
   return (
-    <HydrateClient>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-        <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-          <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
-            Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
-          </h1>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/usage/first-steps"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">First Steps →</h3>
-              <div className="text-lg">
-                Just the basics - Everything you need to know to set up your
-                database and authentication.
-              </div>
-            </Link>
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/introduction"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">Documentation →</h3>
-              <div className="text-lg">
-                Learn more about Create T3 App, the libraries it uses, and how
-                to deploy it.
-              </div>
-            </Link>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-2xl text-white">
-              {hello ? hello.greeting : "Loading tRPC query..."}
-            </p>
-          </div>
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-6 w-6 p-0"
+      onClick={handleCopy}
+    >
+      <Copy className="h-4 w-4" />
+    </Button>
+  );
+};
 
-          <LatestPost />
+export default function Home() {
+  return (
+    <main className="mx-auto my-48 flex min-h-screen max-w-6xl flex-col">
+      <div className="container mx-auto">
+        <h1 className="mb-8 text-3xl font-bold">Network Staking</h1>
+
+        <div className="rounded-lg border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[200px]">
+                  Validator
+                  <ArrowUpDown className="ml-2 inline-block h-4 w-4" />
+                </TableHead>
+                <TableHead>Address</TableHead>
+                <TableHead className="text-right">
+                  Total Stake
+                  <ArrowUpDown className="ml-2 inline-block h-4 w-4" />
+                </TableHead>
+                <TableHead className="text-right">
+                  Owner Stake
+                  <ArrowUpDown className="ml-2 inline-block h-4 w-4" />
+                </TableHead>
+                <TableHead className="text-right">
+                  APY
+                  <ArrowUpDown className="ml-2 inline-block h-4 w-4" />
+                </TableHead>
+                <TableHead className="text-right">
+                  Fee
+                  <ArrowUpDown className="ml-2 inline-block h-4 w-4" />
+                </TableHead>
+                <TableHead className="text-right">
+                  Uptime
+                  <Clock className="ml-2 inline-block h-4 w-4" />
+                </TableHead>
+                <TableHead className="text-center">Status</TableHead>
+                <TableHead className="text-center">Jailed</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {validators.map((validator) => (
+                <TableRow key={validator.address}>
+                  <TableCell className="font-medium">
+                    {validator.name}
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    <div className="flex items-center gap-2">
+                      {validator.address}
+                      <CopyButton text={validator.address} />
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {validator.totalStake}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {validator.ownerStake}
+                  </TableCell>
+                  <TableCell className="text-right text-green-600">
+                    {validator.apy}
+                  </TableCell>
+                  <TableCell className="text-right">{validator.fee}</TableCell>
+                  <TableCell className="text-right">
+                    {validator.uptime}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {validator.acceptingStake ? (
+                      <Badge className="w-20 bg-green-100 text-green-800">
+                        <CheckCircle className="mr-1 inline-block h-4 w-4" />
+                        Active
+                      </Badge>
+                    ) : (
+                      <Badge className="w-20 bg-red-100 text-red-800">
+                        <XCircle className="mr-1 inline-block h-4 w-4" />
+                        Full
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Badge
+                      variant="outline"
+                      className={
+                        validator.jailed
+                          ? "w-20 bg-yellow-100 text-yellow-800"
+                          : "w-20 bg-gray-100 text-gray-800"
+                      }
+                    >
+                      {validator.jailed ? "Yes" : "No"}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
-      </main>
-    </HydrateClient>
+      </div>
+    </main>
   );
 }
