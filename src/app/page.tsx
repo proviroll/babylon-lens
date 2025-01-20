@@ -162,7 +162,7 @@ export default function Home() {
   if (isLoading) return <div>Loading...</div>;
 
   return (
-    <main className="mx-auto my-48 flex min-h-screen max-w-6xl flex-col">
+    <main className="mx-auto my-36 flex max-w-6xl flex-col">
       <div className="container mx-auto">
         <div className="mb-8 flex items-center justify-between">
           <h1 className="text-3xl font-bold">Network Staking</h1>
@@ -174,7 +174,7 @@ export default function Home() {
                 placeholder="Search validators..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-9 rounded-md border border-input py-1 pl-9 pr-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="h-9 rounded-md border border-input bg-background py-1 pl-9 pr-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </div>
             <Select
@@ -213,7 +213,7 @@ export default function Home() {
                   </TableHead>
                   <TableHead className="w-[300px]">Address</TableHead>
                   <TableHead
-                    className="w-[200px] cursor-pointer hover:text-foreground"
+                    className="w-[250px] cursor-pointer hover:text-foreground"
                     onClick={() => toggleSort("tokens")}
                   >
                     Tokens
@@ -272,8 +272,8 @@ export default function Home() {
                         <Badge
                           className={
                             validator.status === "BOND_STATUS_BONDED"
-                              ? "w-24 bg-green-100 text-green-800"
-                              : "w-24 bg-red-100 text-red-800"
+                              ? "w-24 bg-teal-400 text-green-800"
+                              : "w-24 bg-red-200 text-red-800"
                           }
                         >
                           {validator.status === "BOND_STATUS_BONDED" ? (
@@ -294,8 +294,8 @@ export default function Home() {
                           variant="outline"
                           className={
                             validator.jailed
-                              ? "flex w-24 justify-end bg-red-100 text-red-800"
-                              : "flex w-24 justify-end bg-green-100 text-green-800"
+                              ? "flex w-24 justify-end bg-red-200 text-red-800"
+                              : "flex w-24 justify-end bg-teal-400 text-green-800"
                           }
                         >
                           {validator.jailed ? "Yes" : "No"}
@@ -340,8 +340,8 @@ export default function Home() {
                   <Badge
                     className={
                       validator.status === "BOND_STATUS_BONDED"
-                        ? "w-24 bg-green-100 text-green-800"
-                        : "w-24 bg-red-100 text-red-800"
+                        ? "w-24 bg-teal-400 text-green-800"
+                        : "w-24 bg-red-200 text-red-800"
                     }
                   >
                     {validator.status === "BOND_STATUS_BONDED" ? (
@@ -381,8 +381,8 @@ export default function Home() {
                     variant="outline"
                     className={
                       validator.jailed
-                        ? "flex w-24 justify-end bg-red-100 text-red-800"
-                        : "flex w-24 justify-end bg-green-100 text-green-800"
+                        ? "flex w-12 justify-end bg-red-200 text-red-800"
+                        : "flex w-12 justify-end bg-teal-400 text-green-800"
                     }
                   >
                     {validator.jailed ? "Jailed" : "Not Jailed"}
