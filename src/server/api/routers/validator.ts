@@ -42,6 +42,7 @@ const root = protobuf.Root.fromJSON({
                       id: 1,
                     },
                     consensusPubkey: {
+                      // ! Add this field
                       type: "google.protobuf.Any",
                       id: 2,
                     },
@@ -122,6 +123,7 @@ const root = protobuf.Root.fromJSON({
                       id: 1,
                     },
                     updateTime: {
+                      // ! Add this field
                       type: "google.protobuf.Timestamp",
                       id: 2,
                     },
@@ -133,10 +135,12 @@ const root = protobuf.Root.fromJSON({
                       type: "string",
                       id: 1,
                     },
+                    // ! Add this field
                     maxRate: {
                       type: "string",
                       id: 2,
                     },
+                    // ! Add this field
                     maxChangeRate: {
                       type: "string",
                       id: 3,
@@ -260,6 +264,11 @@ const root = protobuf.Root.fromJSON({
   },
 });
 
+type ValidatorObject = {
+  operatorAddress: string;
+  // Add other properties if needed
+};
+
 export const validatorRouter = createTRPCRouter({
   getAll: publicProcedure.query(async () => {
     try {
@@ -282,7 +291,7 @@ export const validatorRouter = createTRPCRouter({
 
         client.makeUnaryRequest(
           "/cosmos.staking.v1beta1.Query/Validators",
-          (value: unknown) => RequestType.encode(message).finish(),
+          () => Buffer.from(RequestType.encode(message).finish()),
           (value: Buffer) => value,
           {},
           new grpc.Metadata(),
@@ -300,26 +309,21 @@ export const validatorRouter = createTRPCRouter({
       const ResponseType = root.lookupType(
         "cosmos.staking.v1beta1.QueryValidatorsResponse",
       );
-      const decodedMessage = ResponseType.decode(response);
+
+      const decodedMessage = ResponseType.decode(response as Uint8Array);
       const jsonMessage = ResponseType.toObject(decodedMessage, {
         longs: String,
         enums: String,
         bytes: String,
       });
 
-      const uniqueValidators = new Set(
-        jsonMessage.validators.map((v) => v.operatorAddress),
-      ).size;
-
-      console.log(
-        `Total validators fetched: ${jsonMessage.validators.length}/${jsonMessage.pagination.total} (${uniqueValidators} unique)`,
-      );
+      const validators: ValidatorObject[] =
+        jsonMessage.validators as ValidatorObject[];
 
       return {
-        validators: jsonMessage.validators,
+        validators: validators,
         pagination: {
           nextKey: null,
-          total: jsonMessage.pagination.total,
         },
       };
     } catch (error) {
