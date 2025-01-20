@@ -58,6 +58,8 @@ export default function Home() {
     column: "moniker" | "tokens" | "commission" | "apy" | null;
     direction: "asc" | "desc";
   }>({ column: null, direction: "asc" });
+  const [showAll, setShowAll] = useState(false);
+  const INITIAL_DISPLAY_COUNT = 10;
 
   const { data: validatorData, isLoading } = api.validator.getAll.useQuery(
     undefined,
@@ -196,105 +198,211 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="rounded-lg border bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead
-                  className="cursor-pointer hover:text-foreground"
-                  onClick={() => toggleSort("moniker")}
-                >
-                  Validator
-                  <ArrowUpDown className="ml-1 inline h-4 w-4" />
-                </TableHead>
-                <TableHead className="w-full max-w-sm">Address</TableHead>
-                <TableHead
-                  className="cursor-pointer hover:text-foreground"
-                  onClick={() => toggleSort("tokens")}
-                >
-                  Tokens
-                  <ArrowUpDown className="ml-1 inline h-4 w-4" />
-                </TableHead>
+        {/* Table view (large screens) */}
+        <div className="hidden lg:block">
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead
+                    className="w-[700px] cursor-pointer hover:text-foreground"
+                    onClick={() => toggleSort("moniker")}
+                  >
+                    Validator
+                    <ArrowUpDown className="ml-1 inline h-4 w-4" />
+                  </TableHead>
+                  <TableHead className="w-[300px]">Address</TableHead>
+                  <TableHead
+                    className="w-[200px] cursor-pointer hover:text-foreground"
+                    onClick={() => toggleSort("tokens")}
+                  >
+                    Tokens
+                    <ArrowUpDown className="ml-1 inline h-4 w-4" />
+                  </TableHead>
 
-                <TableHead
-                  className="cursor-pointer hover:text-foreground"
-                  onClick={() => toggleSort("apy")}
+                  <TableHead
+                    className="w-[200px] cursor-pointer hover:text-foreground"
+                    onClick={() => toggleSort("apy")}
+                  >
+                    APY
+                    <ArrowUpDown className="ml-1 inline h-4 w-4" />
+                  </TableHead>
+                  <TableHead
+                    className="w-[200px] cursor-pointer hover:text-foreground"
+                    onClick={() => toggleSort("commission")}
+                  >
+                    Commission
+                    <ArrowUpDown className="ml-1 inline h-4 w-4" />
+                  </TableHead>
+                  <TableHead className="w-[100px]">Status</TableHead>
+                  <TableHead className="text-right">Jailed</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedValidators
+                  ?.slice(0, showAll ? undefined : INITIAL_DISPLAY_COUNT)
+                  .map((validator) => (
+                    <TableRow key={validator.operatorAddress}>
+                      <TableCell className="font-medium">
+                        {validator.description.moniker}
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">
+                        <div className="flex max-w-sm items-center gap-2 truncate text-blue-600">
+                          {truncateAddress(validator.operatorAddress)}
+                          <CopyButton text={validator.operatorAddress} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="">
+                        {formatTokens(validator.tokens)} BBN
+                      </TableCell>
+                      <TableCell className="text-green-600">
+                        {calculateAPY(
+                          validator.commission.commissionRates.rate,
+                        )}
+                        %
+                      </TableCell>
+                      <TableCell className="">
+                        {(
+                          Number(validator.commission.commissionRates.rate) /
+                          1e16
+                        ).toFixed(1)}
+                        %
+                      </TableCell>
+                      <TableCell className="r">
+                        <Badge
+                          className={
+                            validator.status === "BOND_STATUS_BONDED"
+                              ? "w-24 bg-green-100 text-green-800"
+                              : "w-24 bg-red-100 text-red-800"
+                          }
+                        >
+                          {validator.status === "BOND_STATUS_BONDED" ? (
+                            <>
+                              <CheckCircle className="mr-1 inline-block h-4 w-4" />
+                              Active
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="mr-1 inline-block h-4 w-4" />
+                              Inactive
+                            </>
+                          )}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge
+                          variant="outline"
+                          className={
+                            validator.jailed
+                              ? "flex w-24 justify-end bg-red-100 text-red-800"
+                              : "flex w-24 justify-end bg-green-100 text-green-800"
+                          }
+                        >
+                          {validator.jailed ? "Yes" : "No"}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </div>
+          {sortedValidators &&
+            sortedValidators.length > INITIAL_DISPLAY_COUNT && (
+              <div className="mt-4 flex w-full justify-center border border-[1px] border-foreground/10 py-2">
+                <button
+                  onClick={() => setShowAll(!showAll)}
+                  className="text-sm text-blue-500 hover:underline"
                 >
-                  APY
-                  <ArrowUpDown className="ml-1 inline h-4 w-4" />
-                </TableHead>
-                <TableHead
-                  className="cursor-pointer hover:text-foreground"
-                  onClick={() => toggleSort("commission")}
-                >
-                  Commission
-                  <ArrowUpDown className="ml-1 inline h-4 w-4" />
-                </TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Jailed</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedValidators?.map((validator) => (
-                <TableRow key={validator.operatorAddress}>
-                  <TableCell className="font-medium">
-                    {validator.description.moniker}
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    <div className="flex max-w-sm items-center gap-2 truncate text-blue-600">
+                  {showAll
+                    ? "Show Less"
+                    : `View All (${sortedValidators.length})`}
+                </button>
+              </div>
+            )}
+        </div>
+
+        {/* Grid view (small screens) */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:hidden">
+          {sortedValidators
+            ?.slice(0, showAll ? undefined : INITIAL_DISPLAY_COUNT)
+            .map((validator) => (
+              <div
+                key={validator.operatorAddress}
+                className="rounded-lg border bg-card p-4 shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 text-blue-600">
                       {truncateAddress(validator.operatorAddress)}
-                      <CopyButton text={validator.operatorAddress} />
                     </div>
-                  </TableCell>
-                  <TableCell className="text-right">
+                    <CopyButton text={validator.operatorAddress} />
+                  </div>
+                  <Badge
+                    className={
+                      validator.status === "BOND_STATUS_BONDED"
+                        ? "w-24 bg-green-100 text-green-800"
+                        : "w-24 bg-red-100 text-red-800"
+                    }
+                  >
+                    {validator.status === "BOND_STATUS_BONDED" ? (
+                      <>
+                        <CheckCircle className="mr-1 inline-block h-4 w-4" />
+                        Active
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="mr-1 inline-block h-4 w-4" />
+                        Inactive
+                      </>
+                    )}
+                  </Badge>
+                </div>
+                <div className="mt-2">
+                  <span className="text-sm font-medium text-gray-500">
                     {formatTokens(validator.tokens)} BBN
-                  </TableCell>
-                  <TableCell className="text-right text-green-600">
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <span className="text-sm font-medium text-gray-500">
                     {calculateAPY(validator.commission.commissionRates.rate)}%
-                  </TableCell>
-                  <TableCell className="text-right">
+                    APY
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <span className="text-sm font-medium text-gray-500">
                     {(
                       Number(validator.commission.commissionRates.rate) / 1e16
                     ).toFixed(1)}
-                    %
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge
-                      className={
-                        validator.status === "BOND_STATUS_BONDED"
-                          ? "w-24 bg-green-100 text-green-800"
-                          : "w-24 bg-red-100 text-red-800"
-                      }
-                    >
-                      {validator.status === "BOND_STATUS_BONDED" ? (
-                        <>
-                          <CheckCircle className="mr-1 inline-block h-4 w-4" />
-                          Active
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="mr-1 inline-block h-4 w-4" />
-                          Inactive
-                        </>
-                      )}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge
-                      variant="outline"
-                      className={
-                        validator.jailed
-                          ? "w-24 bg-red-100 text-red-800"
-                          : "w-24 bg-green-100 text-green-800"
-                      }
-                    >
-                      {validator.jailed ? "Yes" : "No"}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    % Commission
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <Badge
+                    variant="outline"
+                    className={
+                      validator.jailed
+                        ? "flex w-24 justify-end bg-red-100 text-red-800"
+                        : "flex w-24 justify-end bg-green-100 text-green-800"
+                    }
+                  >
+                    {validator.jailed ? "Jailed" : "Not Jailed"}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          {sortedValidators &&
+            sortedValidators.length > INITIAL_DISPLAY_COUNT && (
+              <div className="col-span-full mt-4 flex justify-center">
+                <button
+                  onClick={() => setShowAll(!showAll)}
+                  className="border border-2 border-red-600 text-sm text-blue-500 hover:underline"
+                >
+                  {showAll
+                    ? "Show Less"
+                    : `View All (${sortedValidators.length})`}
+                </button>
+              </div>
+            )}
         </div>
       </div>
     </main>
