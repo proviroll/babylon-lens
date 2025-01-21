@@ -199,10 +199,10 @@ export default function Home() {
   if (isLoading) return <div>Loading...</div>;
 
   return (
-    <main className="lex-col mx-auto my-36 flex">
+    <main className="mx-auto my-24 flex flex-col">
       <MaxWidthContainer>
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Network Staking</h1>
+          <h1 className="text-3xl font-bold text-primary">Network Staking</h1>
           <div className="flex items-center gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
