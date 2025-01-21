@@ -1,25 +1,37 @@
 import { bech32 } from "bech32";
+import { createHash } from "crypto";
 
-export const operatorToConsensusAddress = (operatorAddr: string): string => {
+export const operatorToConsensusAddress = (
+  operatorAddr: string,
+  consensusPubkey: { typeUrl: string; value: string },
+): string => {
   try {
-    console.log("Converting address:", {
-      input: operatorAddr,
-    });
+    if (!consensusPubkey || !consensusPubkey.value) {
+      console.error("Missing consensus pubkey");
+      return "";
+    }
 
-    // Decode the operator address
-    const decoded = bech32.decode(operatorAddr);
-    console.log("Decoded address:", {
-      prefix: decoded.prefix,
-      words: decoded.words,
-    });
+    // Decode the base64 pubkey
+    const pubkeyBytes = Buffer.from(consensusPubkey.value, "base64");
 
-    // Convert to consensus address by re-encoding with bbnvalcons prefix
-    const words = decoded.words;
-    const consensusAddr = bech32.encode("bbnvalcons", words);
+    // The actual key is in a protobuf format, we need to skip the first 2 bytes
+    const keyBytes = pubkeyBytes.slice(2);
 
-    console.log("Conversion result:", {
-      input: operatorAddr,
-      output: consensusAddr,
+    // Take the SHA256 hash of the public key
+    const hash = createHash("sha256").update(keyBytes).digest();
+
+    // Take the first 20 bytes of the hash
+    const address = hash.slice(0, 20);
+
+    // Encode with the consensus prefix
+    const consensusAddr = bech32.encode("bbnvalcons", bech32.toWords(address));
+
+    console.log("Address conversion details:", {
+      operatorAddr,
+      pubkeyBase64: consensusPubkey.value,
+      keyBytes: keyBytes.toString("hex"),
+      hash: hash.toString("hex"),
+      consensusAddr,
     });
 
     return consensusAddr;

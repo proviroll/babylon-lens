@@ -55,24 +55,28 @@ export function useValidators() {
       return [];
     }
 
+    console.log(
+      "Available signing info addresses:",
+      signingData.signingInfos.map((info) => info.address),
+    );
+
+    // First, let's see what consensus pubkeys we have
+    validatorData.validators.forEach((validator) => {
+      console.log("Validator details:", {
+        operatorAddress: validator.operatorAddress,
+        consensusPubkey: validator.consensusPubkey,
+      });
+    });
+
     return validatorData.validators.map((validator) => {
       try {
-        // Convert operator address to consensus address using our utility function
         const consensusAddr = operatorToConsensusAddress(
           validator.operatorAddress,
+          validator.consensusPubkey,
         );
-
-        // Find matching signing info using the derived consensus address
         const signingInfo = signingData.signingInfos.find(
           (info) => info.address === consensusAddr,
         );
-
-        console.log("Address matching:", {
-          operatorAddress: validator.operatorAddress,
-          derivedConsensusAddr: consensusAddr,
-          foundMatch: !!signingInfo,
-          matchedWith: signingInfo?.address,
-        });
 
         return {
           ...validator,
