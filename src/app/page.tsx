@@ -1,567 +1,82 @@
 "use client";
 import { MaxWidthContainer } from "@/components/max-width-container";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
-import { api } from "@/trpc/react";
-import { ArrowUpDown, CheckCircle, Copy, Search, XCircle } from "lucide-react";
-import { useState } from "react";
-
-const truncateAddress = (address: string) => {
-  if (!address) return "";
-  return `${address.slice(0, 6)}...${address.slice(-6)}`;
-};
-
-
-
-const CopyButton = ({ text }: { text: string }) => {
-  const { toast } = useToast();
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(text);
-    toast({
-      description: "Address copied to clipboard",
-      duration: 2000,
-    });
-  };
-
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="h-6 w-6 p-0"
-      onClick={handleCopy}
-    >
-      <Copy className="h-3.5 w-3.5 text-foreground/30" />
-    </Button>
-  );
-};
-
-type Validator = {
-  operatorAddress: string;
-  status: string;
-  tokens: string;
-  description: {
-    moniker: string;
-    details: string;
-    website: string;
-  };
-  commission: {
-    commissionRates: {
-      rate: string;
-    };
-  };
-  jailed: boolean;
-};
-
-type ValidatorData = {
-  validators: Validator[];
-  pagination: {
-    nextKey: null;
-    total: number;
-  };
-};
+import { ValidatorDetails } from "@/components/pages/validators/details";
+import { ValidatorFilters } from "@/components/pages/validators/filters";
+import { ValidatorGrid } from "@/components/pages/validators/grid";
+import { ValidatorTable } from "@/components/pages/validators/table";
+import { Spinner } from "@/components/ui/spinner";
+import { useValidators } from "@/hooks/use-validators";
+import { calculateAPY, formatTokens, truncateAddress } from "@/lib/formatting";
 
 export default function Home() {
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<
-    "all" | "jailed" | "active" | "inactive"
-  >("all");
-  const [sort, setSort] = useState<{
-    column: "moniker" | "tokens" | "commission" | "apy" | null;
-    direction: "asc" | "desc";
-  }>({ column: null, direction: "asc" });
-  const [showAll, setShowAll] = useState(false);
+  const {
+    validators,
+    isLoading,
+    counts,
+    search,
+    setSearch,
+    filter,
+    setFilter,
+    sort,
+    toggleSort,
+    showAll,
+    setShowAll,
+    selectedValidator,
+    setSelectedValidator,
+  } = useValidators();
+
   const INITIAL_DISPLAY_COUNT = 10;
 
-  // Add selectedValidator state with explicit type
-  const [selectedValidator, setSelectedValidator] = useState<Validator | null>(
-    null,
-  );
-
-  // Update the useQuery to specify the type
-  const { data: validatorData, isLoading } =
-    api.validator.getAll.useQuery<ValidatorData>(undefined, {
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
-    });
-
-  // Calculate counts for each filter
-  const counts = {
-    all: validatorData?.validators.length ?? 0,
-    jailed: validatorData?.validators.filter((v) => v.jailed).length ?? 0,
-    active:
-      validatorData?.validators.filter((v) => v.status === "BOND_STATUS_BONDED")
-        .length ?? 0,
-    inactive:
-      validatorData?.validators.filter((v) => v.status !== "BOND_STATUS_BONDED")
-        .length ?? 0,
-  };
-
-  const formatTokens = (tokens: string) => {
-    const amount = Number(tokens) / 1e6;
-    return new Intl.NumberFormat("en-US").format(amount);
-  };
-
-  const calculateAPY = (commission: string) => {
-    const rate = Number(commission) / 1e18;
-    return ((1 - rate) * 0.12 * 100).toFixed(2);
-  };
-
-  const filteredValidators = validatorData?.validators.filter((validator) => {
-    // First apply status/jailed filter
-    const statusFilter =
-      filter === "all"
-        ? true
-        : filter === "jailed"
-          ? validator.jailed
-          : filter === "active"
-            ? validator.status === "BOND_STATUS_BONDED"
-            : validator.status !== "BOND_STATUS_BONDED";
-
-    // Then apply search filter
-    const searchFilter = search
-      ? validator.description.moniker
-          .toLowerCase()
-          .includes(search.toLowerCase())
-      : true;
-
-    return statusFilter && searchFilter;
-  });
-
-  const sortValidators = (validators: typeof filteredValidators) => {
-    if (!validators || !sort.column) return validators;
-
-    return [...validators].sort((a, b) => {
-      const direction = sort.direction === "asc" ? 1 : -1;
-
-      switch (sort.column) {
-        case "moniker":
-          return (
-            direction *
-            a.description.moniker.localeCompare(b.description.moniker)
-          );
-        case "tokens":
-          return direction * (Number(a.tokens) - Number(b.tokens));
-        case "commission":
-          return (
-            direction *
-            (Number(a.commission.commissionRates.rate) -
-              Number(b.commission.commissionRates.rate))
-          );
-        case "apy":
-          return (
-            direction *
-            (Number(calculateAPY(a.commission.commissionRates.rate)) -
-              Number(calculateAPY(b.commission.commissionRates.rate)))
-          );
-        default:
-          return 0;
-      }
-    });
-  };
-
-  const sortedValidators = sortValidators(filteredValidators);
-
-  const toggleSort = (column: typeof sort.column) => {
-    if (sort.column === column) {
-      setSort((prev) => ({
-        ...prev,
-        direction: prev.direction === "asc" ? "desc" : "asc",
-      }));
-    } else {
-      setSort({ column, direction: "asc" });
-    }
-  };
-
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <main className="mx-auto my-24 flex flex-col">
+        <MaxWidthContainer>
+          <div className="flex h-[50vh] items-center justify-center">
+            <Spinner className="h-8 w-8 text-primary" />
+          </div>
+        </MaxWidthContainer>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto my-24 flex flex-col">
       <MaxWidthContainer>
-        <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-primary">Network Staking</h1>
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-              <input
-                type="text"
-                placeholder="Search validators..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="h-9 rounded-md border border-input bg-background py-1 pl-9 pr-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              />
-            </div>
-            <Select
-              value={filter}
-              onValueChange={(value: typeof filter) => setFilter(value)}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter validators" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  All Validators ({counts.all})
-                </SelectItem>
-                <SelectItem value="active">Active ({counts.active})</SelectItem>
-                <SelectItem value="inactive">
-                  Inactive ({counts.inactive})
-                </SelectItem>
-                <SelectItem value="jailed">Jailed ({counts.jailed})</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <ValidatorFilters
+          counts={counts}
+          filters={{ search, filter, sort }}
+          onFiltersChange={(filters) => {
+            setSearch(filters.search);
+            setFilter(filters.filter);
+          }}
+        />
+        <ValidatorTable
+          validators={validators}
+          isLoading={isLoading}
+          showAll={showAll}
+          onShowAllChange={setShowAll}
+          onValidatorSelect={setSelectedValidator}
+          toggleSort={toggleSort}
+          formatTokens={formatTokens}
+          truncateAddress={truncateAddress}
+          INITIAL_DISPLAY_COUNT={INITIAL_DISPLAY_COUNT}
+        />
 
-        {/* Table view (large screens) */}
-        <div className="hidden lg:block">
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead
-                    className="w-[700px] cursor-pointer hover:text-foreground"
-                    onClick={() => toggleSort("moniker")}
-                  >
-                    Validator
-                    <ArrowUpDown className="ml-1 inline h-3.5 w-3.5" />
-                  </TableHead>
-                  <TableHead className="w-[300px]">Address</TableHead>
-                  <TableHead
-                    className="w-[250px] cursor-pointer hover:text-foreground"
-                    onClick={() => toggleSort("tokens")}
-                  >
-                    Tokens
-                    <ArrowUpDown className="ml-1 inline h-3.5 w-3.5" />
-                  </TableHead>
-
-                  <TableHead
-                    className="w-[200px] cursor-pointer hover:text-foreground"
-                    onClick={() => toggleSort("apy")}
-                  >
-                    APY
-                    <ArrowUpDown className="ml-1 inline h-3.5 w-3.5" />
-                  </TableHead>
-                  <TableHead
-                    className="w-[200px] cursor-pointer hover:text-foreground"
-                    onClick={() => toggleSort("commission")}
-                  >
-                    Commission
-                    <ArrowUpDown className="ml-1 inline h-3.5 w-3.5" />
-                  </TableHead>
-                  <TableHead className="w-[100px]">Status</TableHead>
-                  <TableHead className="text-right">Jailed</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedValidators
-                  ?.slice(0, showAll ? undefined : INITIAL_DISPLAY_COUNT)
-                  .map((validator) => (
-                    <TableRow
-                      key={validator.operatorAddress}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => setSelectedValidator(validator)}
-                    >
-                      <TableCell className="font-medium">
-                        {validator.description.moniker}
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        <div className="flex max-w-sm items-center gap-2 truncate text-teal-600">
-                          {truncateAddress(validator.operatorAddress)}
-                          <CopyButton text={validator.operatorAddress} />
-                        </div>
-                      </TableCell>
-                      <TableCell className="">
-                        {formatTokens(validator.tokens)} BBN
-                      </TableCell>
-                      <TableCell className="text-teal-600">
-                        {calculateAPY(
-                          validator.commission.commissionRates.rate,
-                        )}
-                        %
-                      </TableCell>
-                      <TableCell className="">
-                        {(
-                          Number(validator.commission.commissionRates.rate) /
-                          1e16
-                        ).toFixed(1)}
-                        %
-                      </TableCell>
-                      <TableCell className="">
-                        <Badge
-                          className={
-                            validator.status === "BOND_STATUS_BONDED"
-                              ? "w-24 bg-teal-400 text-teal-800"
-                              : "w-24 bg-red-200 text-red-800"
-                          }
-                        >
-                          {validator.status === "BOND_STATUS_BONDED" ? (
-                            <>
-                              <CheckCircle className="mr-1 inline-block h-3.5 w-3.5" />
-                              Active
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="mr-1 inline-block h-3.5 w-3.5" />
-                              Inactive
-                            </>
-                          )}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge
-                          variant="outline"
-                          className={
-                            validator.jailed
-                              ? "flex w-24 justify-end bg-red-200 text-red-800"
-                              : "flex w-24 justify-end bg-teal-400 text-green-800"
-                          }
-                        >
-                          {validator.jailed ? "Yes" : "No"}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Add Sheet component before the "Show More" button */}
-          <Sheet
-            open={!!selectedValidator}
-            onOpenChange={() => setSelectedValidator(null)}
-          >
-            <SheetContent className="w-[400px] sm:w-[540px]">
-              <SheetHeader>
-                <SheetTitle>
-                  {selectedValidator?.description.moniker}
-                </SheetTitle>
-              </SheetHeader>
-
-              <div className="mt-6 space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Operator Address
-                  </h3>
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="font-mono text-sm text-blue-600">
-                      {truncateAddress(
-                        selectedValidator?.operatorAddress ?? "",
-                      )}
-                    </span>
-                    {selectedValidator && (
-                      <CopyButton text={selectedValidator.operatorAddress} />
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Description
-                  </h3>
-                  <p className="mt-1 text-sm">
-                    {selectedValidator?.description.details ??
-                      "No description provided"}
-                  </p>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Website
-                  </h3>
-                  <a
-                    href={selectedValidator?.description.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 text-sm text-blue-600 hover:underline"
-                  >
-                    {selectedValidator?.description.website ??
-                      "No website provided"}
-                  </a>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Tokens
-                    </h3>
-                    <p className="mt-1 text-sm">
-                      {selectedValidator &&
-                        formatTokens(selectedValidator.tokens)}{" "}
-                      BBN
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Commission
-                    </h3>
-                    <p className="mt-1 text-sm">
-                      {selectedValidator &&
-                        (
-                          Number(
-                            selectedValidator.commission.commissionRates.rate,
-                          ) / 1e16
-                        ).toFixed(1)}
-                      %
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      APY
-                    </h3>
-                    <p className="mt-1 text-sm text-green-600">
-                      {selectedValidator &&
-                        calculateAPY(
-                          selectedValidator.commission.commissionRates.rate,
-                        )}
-                      %
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Status
-                    </h3>
-                    <Badge
-                      className={`mt-1 ${
-                        selectedValidator?.status === "BOND_STATUS_BONDED"
-                          ? "bg-teal-400 text-green-800"
-                          : "bg-red-200 text-red-800"
-                      }`}
-                    >
-                      {selectedValidator?.status === "BOND_STATUS_BONDED"
-                        ? "Active"
-                        : "Inactive"}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
-
-          {sortedValidators &&
-            sortedValidators.length > INITIAL_DISPLAY_COUNT && (
-              <div className="mt-4 flex w-full justify-center border border-[1px] border-foreground/10 py-2">
-                <button
-                  onClick={() => setShowAll(!showAll)}
-                  className="text-sm text-blue-500 hover:underline"
-                >
-                  {showAll
-                    ? "Show Less"
-                    : `View All (${sortedValidators.length})`}
-                </button>
-              </div>
-            )}
-        </div>
-
-        {/* Grid view (small screens) */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:hidden">
-          {sortedValidators
-            ?.slice(0, showAll ? undefined : INITIAL_DISPLAY_COUNT)
-            .map((validator) => (
-              <div
-                key={validator.operatorAddress}
-                className="rounded-lg border bg-card p-4 shadow-sm"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-3.5 w-3.5 text-blue-600">
-                      {truncateAddress(validator.operatorAddress)}
-                    </div>
-                    <CopyButton text={validator.operatorAddress} />
-                  </div>
-                  <Badge
-                    className={
-                      validator.status === "BOND_STATUS_BONDED"
-                        ? "w-24 bg-teal-400 text-green-800"
-                        : "w-24 bg-red-200 text-red-800"
-                    }
-                  >
-                    {validator.status === "BOND_STATUS_BONDED" ? (
-                      <>
-                        <CheckCircle className="mr-1 inline-block h-3.5 w-3.5" />
-                        Active
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="mr-1 inline-block h-3.5 w-3.5" />
-                        Inactive
-                      </>
-                    )}
-                  </Badge>
-                </div>
-                <div className="mt-2">
-                  <span className="text-sm font-medium text-gray-500">
-                    {formatTokens(validator.tokens)} BBN
-                  </span>
-                </div>
-                <div className="mt-2">
-                  <span className="text-sm font-medium text-gray-500">
-                    {calculateAPY(validator.commission.commissionRates.rate)}%
-                    APY
-                  </span>
-                </div>
-                <div className="mt-2">
-                  <span className="text-sm font-medium text-gray-500">
-                    {(
-                      Number(validator.commission.commissionRates.rate) / 1e16
-                    ).toFixed(1)}
-                    % Commission
-                  </span>
-                </div>
-                <div className="mt-2">
-                  <Badge
-                    variant="outline"
-                    className={
-                      validator.jailed
-                        ? "flex w-12 justify-end bg-red-200 text-red-800"
-                        : "flex w-12 justify-end bg-teal-400 text-green-800"
-                    }
-                  >
-                    {validator.jailed ? "Jailed" : "Not Jailed"}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-          {sortedValidators &&
-            sortedValidators.length > INITIAL_DISPLAY_COUNT && (
-              <div className="col-span-full mt-4 flex justify-center">
-                <button
-                  onClick={() => setShowAll(!showAll)}
-                  className="border border-2 border-red-600 text-sm text-blue-500 hover:underline"
-                >
-                  {showAll
-                    ? "Show Less"
-                    : `View All (${sortedValidators.length})`}
-                </button>
-              </div>
-            )}
-        </div>
+        <ValidatorDetails
+          validator={selectedValidator}
+          onClose={() => setSelectedValidator(null)}
+          truncateAddress={truncateAddress}
+          formatTokens={formatTokens}
+          calculateAPY={calculateAPY}
+        />
+        <ValidatorGrid
+          validators={validators}
+          isLoading={isLoading}
+          showAll={showAll}
+          onShowAllChange={setShowAll}
+        />
       </MaxWidthContainer>
     </main>
   );
 }
+

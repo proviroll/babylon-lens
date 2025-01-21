@@ -28,7 +28,7 @@ export function Navbar() {
             />
           </Link>
 
-          <nav className="flex items-center gap-6 text-primary/80">
+          <nav className="flex items-center gap-6 text-muted-foreground">
             <Link
               href="/overview"
               className="text-sm font-medium hover:text-primary"
