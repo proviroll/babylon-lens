@@ -1,4 +1,5 @@
 "use client";
+import { MaxWidthContainer } from "@/components/max-width-container";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +33,8 @@ const truncateAddress = (address: string) => {
   return `${address.slice(0, 6)}...${address.slice(-6)}`;
 };
 
+
+
 const CopyButton = ({ text }: { text: string }) => {
   const { toast } = useToast();
 
@@ -50,7 +53,7 @@ const CopyButton = ({ text }: { text: string }) => {
       className="h-6 w-6 p-0"
       onClick={handleCopy}
     >
-      <Copy className="h-3.5 w-3.5" />
+      <Copy className="h-3.5 w-3.5 text-foreground/30" />
     </Button>
   );
 };
@@ -72,6 +75,14 @@ type Validator = {
   jailed: boolean;
 };
 
+type ValidatorData = {
+  validators: Validator[];
+  pagination: {
+    nextKey: null;
+    total: number;
+  };
+};
+
 export default function Home() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<
@@ -89,16 +100,13 @@ export default function Home() {
     null,
   );
 
-  // Get the data first
-  const { data: validatorData, isLoading } = api.validator.getAll.useQuery(
-    undefined,
-    {
+  // Update the useQuery to specify the type
+  const { data: validatorData, isLoading } =
+    api.validator.getAll.useQuery<ValidatorData>(undefined, {
       refetchOnMount: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,
-      cacheTime: Infinity,
-    },
-  );
+    });
 
   // Calculate counts for each filter
   const counts = {
@@ -191,8 +199,8 @@ export default function Home() {
   if (isLoading) return <div>Loading...</div>;
 
   return (
-    <main className="mx-auto my-36 flex max-w-6xl flex-col">
-      <div className="container mx-auto">
+    <main className="lex-col mx-auto my-36 flex">
+      <MaxWidthContainer>
         <div className="mb-8 flex items-center justify-between">
           <h1 className="text-3xl font-bold">Network Staking</h1>
           <div className="flex items-center gap-4">
@@ -280,7 +288,7 @@ export default function Home() {
                         {validator.description.moniker}
                       </TableCell>
                       <TableCell className="font-mono text-sm">
-                        <div className="flex max-w-sm items-center gap-2 truncate text-blue-600">
+                        <div className="flex max-w-sm items-center gap-2 truncate text-teal-600">
                           {truncateAddress(validator.operatorAddress)}
                           <CopyButton text={validator.operatorAddress} />
                         </div>
@@ -288,7 +296,7 @@ export default function Home() {
                       <TableCell className="">
                         {formatTokens(validator.tokens)} BBN
                       </TableCell>
-                      <TableCell className="text-green-600">
+                      <TableCell className="text-teal-600">
                         {calculateAPY(
                           validator.commission.commissionRates.rate,
                         )}
@@ -301,11 +309,11 @@ export default function Home() {
                         ).toFixed(1)}
                         %
                       </TableCell>
-                      <TableCell className="r">
+                      <TableCell className="">
                         <Badge
                           className={
                             validator.status === "BOND_STATUS_BONDED"
-                              ? "w-24 bg-teal-400 text-green-800"
+                              ? "w-24 bg-teal-400 text-teal-800"
                               : "w-24 bg-red-200 text-red-800"
                           }
                         >
@@ -360,7 +368,7 @@ export default function Home() {
                   <div className="mt-1 flex items-center gap-2">
                     <span className="font-mono text-sm text-blue-600">
                       {truncateAddress(
-                        selectedValidator?.operatorAddress || "",
+                        selectedValidator?.operatorAddress ?? "",
                       )}
                     </span>
                     {selectedValidator && (
@@ -374,7 +382,7 @@ export default function Home() {
                     Description
                   </h3>
                   <p className="mt-1 text-sm">
-                    {selectedValidator?.description.details ||
+                    {selectedValidator?.description.details ??
                       "No description provided"}
                   </p>
                 </div>
@@ -389,7 +397,7 @@ export default function Home() {
                     rel="noopener noreferrer"
                     className="mt-1 text-sm text-blue-600 hover:underline"
                   >
-                    {selectedValidator?.description.website ||
+                    {selectedValidator?.description.website ??
                       "No website provided"}
                   </a>
                 </div>
@@ -553,7 +561,7 @@ export default function Home() {
               </div>
             )}
         </div>
-      </div>
+      </MaxWidthContainer>
     </main>
   );
 }
