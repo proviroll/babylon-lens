@@ -1,3 +1,4 @@
+import { operatorToConsensusAddress } from "@/lib/address";
 import { calculateUptime } from "@/lib/validator";
 import { api } from "@/trpc/react";
 import type { Validator } from "@/types/validator";
@@ -49,26 +50,46 @@ export function useValidators() {
       validatorData?.validators.filter((v) => v.status !== "BOND_STATUS_BONDED")
         .length ?? 0,
   };
-
   const validatorsWithUptime = useMemo(() => {
     if (!validatorData?.validators || !signingData?.signingInfos) {
       return [];
     }
 
     return validatorData.validators.map((validator) => {
-      const signingInfo = signingData.signingInfos.find(
-        (info) => info.address === validator.consensusPubkey,
-      );
+      try {
+        // Convert operator address to consensus address using our utility function
+        const consensusAddr = operatorToConsensusAddress(
+          validator.operatorAddress,
+        );
 
-      return {
-        ...validator,
-        uptime: signingInfo
-          ? calculateUptime(
-              signingInfo.startHeight,
-              signingInfo.missedBlocksCounter,
-            )
-          : undefined,
-      };
+        // Find matching signing info using the derived consensus address
+        const signingInfo = signingData.signingInfos.find(
+          (info) => info.address === consensusAddr,
+        );
+
+        console.log("Address matching:", {
+          operatorAddress: validator.operatorAddress,
+          derivedConsensusAddr: consensusAddr,
+          foundMatch: !!signingInfo,
+          matchedWith: signingInfo?.address,
+        });
+
+        return {
+          ...validator,
+          uptime: signingInfo
+            ? calculateUptime(
+                signingInfo.startHeight,
+                signingInfo.missedBlocksCounter,
+              )
+            : undefined,
+        };
+      } catch (error) {
+        console.error("Error matching validator:", error);
+        return {
+          ...validator,
+          uptime: undefined,
+        };
+      }
     });
   }, [validatorData, signingData]);
 
