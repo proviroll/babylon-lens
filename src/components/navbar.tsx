@@ -1,6 +1,6 @@
 "use client";
 
-import { Github } from "lucide-react";
+import { Github, Menu } from "lucide-react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,10 +15,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 
 export function Navbar() {
   const { theme } = useTheme();
   const [showComingSoon, setShowComingSoon] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
@@ -38,7 +40,8 @@ export function Navbar() {
               />
             </Link>
 
-            <nav className="flex items-center gap-6 text-muted-foreground">
+            {/* Desktop Navigation */}
+            <nav className="hidden items-center gap-6 text-muted-foreground md:flex">
               <Link
                 href="/validators"
                 className="text-sm font-medium hover:text-primary"
@@ -72,9 +75,54 @@ export function Navbar() {
                 rel="noopener noreferrer"
                 className="hover:text-primary"
               >
-                <Github className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+                <Github className="h-5 w-5" />
               </a>
               <ThemeToggle />
+
+              {/* Mobile Menu Button */}
+              <Sheet open={isOpen} onOpenChange={setIsOpen}>
+                <SheetTrigger className="md:hidden" aria-label="Menu">
+                  <Menu className="h-5 w-5" />
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[300px]">
+                  <nav className="flex flex-col gap-4">
+                    <Link
+                      href="/validators"
+                      onClick={() => setIsOpen(false)}
+                      className="text-sm font-medium hover:text-primary"
+                    >
+                      Validators
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setIsOpen(false);
+                        setShowComingSoon(true);
+                      }}
+                      className="text-left text-sm font-medium hover:text-primary"
+                    >
+                      Finality Providers
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsOpen(false);
+                        setShowComingSoon(true);
+                      }}
+                      className="text-left text-sm font-medium hover:text-primary"
+                    >
+                      Staking Calculator
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsOpen(false);
+                        setShowComingSoon(true);
+                      }}
+                      className="text-left text-sm font-medium hover:text-primary"
+                    >
+                      Stake
+                    </button>
+                  </nav>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
         </MaxWidthContainer>

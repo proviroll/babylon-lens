@@ -8,6 +8,7 @@ interface ValidatorGridProps {
   isLoading: boolean;
   showAll: boolean;
   onShowAllChange: (show: boolean) => void;
+  onValidatorSelect: (validator: Validator) => void;
 }
 
 export function ValidatorGrid({
@@ -15,6 +16,7 @@ export function ValidatorGrid({
   isLoading,
   showAll,
   onShowAllChange,
+  onValidatorSelect,
 }: ValidatorGridProps) {
   if (isLoading) {
     return <div>Loading...</div>;
@@ -23,35 +25,44 @@ export function ValidatorGrid({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:hidden">
-        {validators.map((validator) => (
-          <Card key={validator.operatorAddress} className="">
-            <CardHeader>
+        {validators.slice(0, showAll ? undefined : 10).map((validator) => (
+          <Card
+            key={validator.operatorAddress}
+            className="cursor-pointer transition-colors hover:bg-muted/50"
+            onClick={() => onValidatorSelect(validator)}
+          >
+            <CardHeader className="pb-2">
               <CardTitle className="text-lg">
                 {validator.description.moniker}
               </CardTitle>
-              <div className="text-sm text-muted-foreground">
-                {truncateAddress(validator.operatorAddress)}
+              <div className="flex items-center gap-2 text-sm text-sky-400">
+                <span className="font-mono">
+                  {truncateAddress(validator.operatorAddress)}
+                </span>
               </div>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-2 pt-2">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Tokens</span>
-                <span>{formatTokens(validator.tokens)} BBN</span>
+                <span className="text-sm text-muted-foreground">Tokens</span>
+                <span className="text-sm">
+                  {formatTokens(validator.tokens)} BBN
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Commission</span>
-                <span>
+                <span className="text-sm text-muted-foreground">
+                  Commission
+                </span>
+                <span className="text-sm">
                   {(
-                    (Number(validator.commission.commissionRates.rate) / 1e18) *
-                    100
-                  ).toFixed(2)}
+                    Number(validator.commission.commissionRates.rate) / 1e16
+                  ).toFixed(1)}
                   %
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Uptime</span>
+                <span className="text-sm text-muted-foreground">Uptime</span>
                 <span
-                  className={`${
+                  className={`text-sm ${
                     validator.uptime && Number(validator.uptime) < 99.98
                       ? "text-red-500"
                       : "text-teal-600"
@@ -61,9 +72,9 @@ export function ValidatorGrid({
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Status</span>
+                <span className="text-sm text-muted-foreground">Status</span>
                 <span
-                  className={`${
+                  className={`text-sm ${
                     validator.jailed
                       ? "text-red-500"
                       : validator.status === "BOND_STATUS_BONDED"

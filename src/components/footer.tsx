@@ -5,8 +5,10 @@ export function Footer() {
   return (
     <footer className="mt-auto border-t bg-background">
       <MaxWidthContainer>
-        <div className="flex h-16 items-center justify-between">
-          <p className="text-sm text-muted-foreground">Powered by Proviroll</p>
+        <div className="flex h-16 flex-col items-center justify-center gap-4 px-4 py-8 sm:h-16 sm:flex-row sm:justify-between sm:py-0">
+          <p className="text-center text-sm text-muted-foreground">
+            Powered by Proviroll
+          </p>
 
           <div className="flex items-center gap-4">
             <a
