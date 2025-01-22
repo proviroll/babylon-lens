@@ -4,6 +4,7 @@ import * as grpc from "@grpc/grpc-js";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 const root = validatorProto.root;
+const grpcUrl = process.env.BABYLON_GRPC_URL;
 
 type ValidatorSigningInfo = {
   address: string;
@@ -18,7 +19,7 @@ export const validatorRouter = createTRPCRouter({
     try {
       const ServiceClient = grpc.makeGenericClientConstructor({}, "Query", {});
       const client = new ServiceClient(
-        "babylon-testnet-grpc.polkachu.com:20690",
+        grpcUrl,
         grpc.credentials.createInsecure(),
       );
 

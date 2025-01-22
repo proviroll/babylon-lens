@@ -3,13 +3,14 @@ import { finalityProviderProto } from "../proto/finality-provider";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 const root = finalityProviderProto;
+const grpcUrl = process.env.BABYLON_GRPC_URL;
 
 export const finalityRouter = createTRPCRouter({
   getAll: publicProcedure.query(async () => {
     try {
       const ServiceClient = grpc.makeGenericClientConstructor({}, "Query", {});
       const client = new ServiceClient(
-        "babylon-testnet-grpc.polkachu.com:20690",
+        grpcUrl,
         grpc.credentials.createInsecure(),
       );
 
