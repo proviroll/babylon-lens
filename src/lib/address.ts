@@ -26,14 +26,6 @@ export const operatorToConsensusAddress = (
     // Encode with the consensus prefix
     const consensusAddr = bech32.encode("bbnvalcons", bech32.toWords(address));
 
-    console.log("Address conversion details:", {
-      operatorAddr,
-      pubkeyBase64: consensusPubkey.value,
-      keyBytes: keyBytes.toString("hex"),
-      hash: hash.toString("hex"),
-      consensusAddr,
-    });
-
     return consensusAddr;
   } catch (error) {
     console.error("Error in address conversion:", error);

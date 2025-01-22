@@ -1,10 +1,20 @@
 import type { Validator } from "@/types/validator";
 
-export const calculateUptime = (startHeight: string, missedBlocks: string) => {
-  const totalBlocks = Number(startHeight);
+export const calculateUptime = (
+  startHeight: string,
+  missedBlocks: string,
+  latestHeight: string,
+) => {
+  const start = Number(startHeight);
   const missed = Number(missedBlocks);
-  if (totalBlocks === 0) return "0";
-  const uptime = ((totalBlocks - missed) / totalBlocks) * 100;
+  const latest = Number(latestHeight);
+
+  if (start === 0 || latest === 0) return "0";
+
+  const blocksSinceStart = latest - start;
+  if (blocksSinceStart <= 0) return "100";
+
+  const uptime = ((blocksSinceStart - missed) / blocksSinceStart) * 100;
   return uptime.toFixed(2);
 };
 

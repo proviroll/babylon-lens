@@ -119,19 +119,22 @@ export const validatorRouter = createTRPCRouter({
         enums: String,
         bytes: String,
         defaults: true,
-      }) as { info: ValidatorSigningInfo[] };
+      });
+
+      console.log(
+        "Raw signing infos response:",
+        JSON.stringify(jsonMessage, null, 2),
+      );
 
       const transformedInfo = jsonMessage.info.map(
         (info: ValidatorSigningInfo) => ({
           address: info.address,
-          startHeight: info.startHeight.toString(),
-          indexOffset: info.indexOffset.toString(),
-          jailedUntil: info.jailedUntil,
-          missedBlocksCounter: info.missedBlocksCounter.toString(),
+          startHeight: info.startHeight?.toString() ?? "0",
+          indexOffset: info.indexOffset?.toString() ?? "0",
+          jailedUntil: info.jailedUntil ?? "",
+          missedBlocksCounter: info.missedBlocksCounter?.toString() ?? "0",
         }),
       );
-
-      console.log(transformedInfo);
 
       return {
         signingInfos: transformedInfo,
@@ -141,6 +144,138 @@ export const validatorRouter = createTRPCRouter({
       };
     } catch (error) {
       console.error("Error fetching signing info:", error);
+      throw error;
+    }
+  }),
+  getChainInfo: publicProcedure.query(async () => {
+    try {
+      const ServiceClient = grpc.makeGenericClientConstructor({}, "Query", {});
+      const client = new ServiceClient(
+        "babylon-testnet-grpc.polkachu.com:20690",
+        grpc.credentials.createInsecure(),
+      );
+
+      // Get latest block
+      const blockResponse = await new Promise((resolve, reject) => {
+        const RequestType = root.lookupType(
+          "cosmos.base.tendermint.v1beta1.GetLatestBlockRequest",
+        );
+        const message = RequestType.create({});
+
+        client.makeUnaryRequest(
+          "/cosmos.base.tendermint.v1beta1.Service/GetLatestBlock",
+          () => Buffer.from(RequestType.encode(message).finish()),
+          (value: Buffer) => value,
+          {},
+          new grpc.Metadata(),
+          { deadline: Date.now() + 10000 },
+          (err, response) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve(response);
+          },
+        );
+      });
+
+      // Get community pool
+      const poolResponse = await new Promise((resolve, reject) => {
+        const RequestType = root.lookupType(
+          "cosmos.distribution.v1beta1.QueryCommunityPoolRequest",
+        );
+        const message = RequestType.create({});
+
+        client.makeUnaryRequest(
+          "/cosmos.distribution.v1beta1.Query/CommunityPool",
+          () => Buffer.from(RequestType.encode(message).finish()),
+          (value: Buffer) => value,
+          {},
+          new grpc.Metadata(),
+          { deadline: Date.now() + 10000 },
+          (err, response) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve(response);
+          },
+        );
+      });
+
+      // Get total supply
+      const supplyResponse = await new Promise((resolve, reject) => {
+        const RequestType = root.lookupType(
+          "cosmos.bank.v1beta1.QueryTotalSupplyRequest",
+        );
+        const message = RequestType.create({});
+
+        client.makeUnaryRequest(
+          "/cosmos.bank.v1beta1.Query/TotalSupply",
+          () => Buffer.from(RequestType.encode(message).finish()),
+          (value: Buffer) => value,
+          {},
+          new grpc.Metadata(),
+          { deadline: Date.now() + 10000 },
+          (err, response) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve(response);
+          },
+        );
+      });
+
+      const BlockResponseType = root.lookupType(
+        "cosmos.base.tendermint.v1beta1.GetLatestBlockResponse",
+      );
+      const PoolResponseType = root.lookupType(
+        "cosmos.distribution.v1beta1.QueryCommunityPoolResponse",
+      );
+      const SupplyResponseType = root.lookupType(
+        "cosmos.bank.v1beta1.QueryTotalSupplyResponse",
+      );
+
+      const blockData = BlockResponseType.decode(blockResponse as Uint8Array);
+      const poolData = PoolResponseType.decode(poolResponse as Uint8Array);
+      const supplyData = SupplyResponseType.decode(
+        supplyResponse as Uint8Array,
+      );
+
+      const jsonBlockData = BlockResponseType.toObject(blockData, {
+        longs: String,
+        enums: String,
+        bytes: String,
+      });
+      const jsonPoolData = PoolResponseType.toObject(poolData, {
+        longs: String,
+        enums: String,
+        bytes: String,
+      });
+      const jsonSupplyData = SupplyResponseType.toObject(supplyData, {
+        longs: String,
+        enums: String,
+        bytes: String,
+      });
+      console.log({ jsonBlockData, jsonPoolData, jsonSupplyData });
+
+      return {
+        latestHeight: jsonBlockData.block?.header?.height ?? "0",
+        chainId: jsonBlockData.block?.header?.chainId ?? "unknown",
+        communityPool:
+          jsonPoolData.pool?.map((coin: any) => ({
+            denom: coin.denom,
+            amount: coin.amount,
+          })) ?? [],
+        totalSupply:
+          jsonSupplyData.supply?.map((coin: any) => ({
+            denom: coin.denom,
+            amount: coin.amount,
+          })) ?? [],
+      };
+    } catch (error) {
+      console.error("Error fetching chain info:", error);
       throw error;
     }
   }),

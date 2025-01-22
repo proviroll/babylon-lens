@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -115,11 +116,17 @@ export function ValidatorDetails({
             </div>
 
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">APY</h3>
-              <p className="mt-1 text-sm text-green-600">
-                {validator &&
-                  calculateAPY(validator.commission.commissionRates.rate)}
-                %
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Uptime
+              </h3>
+              <p
+                className={`mt-1 text-sm ${
+                  validator?.uptime && Number(validator.uptime) < 99.98
+                    ? "text-red-500"
+                    : ""
+                }`}
+              >
+                {validator?.uptime ? `${validator.uptime}%` : "N/A"}
               </p>
             </div>
 
@@ -178,6 +185,19 @@ export function ValidatorDetails({
                     ).toLocaleDateString()
                   : "N/A"}
               </p>
+            </div>
+
+            <div>
+              <Label>Start Height</Label>
+              <div className="mt-1 font-mono">
+                {validator?.signingInfo?.startHeight ?? "N/A"}
+              </div>
+            </div>
+            <div>
+              <Label>Missed Blocks</Label>
+              <div className="mt-1 font-mono">
+                {validator?.signingInfo?.missedBlocksCounter ?? "N/A"}
+              </div>
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { MaxWidthContainer } from "@/components/max-width-container";
 import { ValidatorDetails } from "@/components/pages/validators/details";
 import { ValidatorFilters } from "@/components/pages/validators/filters";
 import { ValidatorGrid } from "@/components/pages/validators/grid";
+import { NetworkStatsCards } from "@/components/pages/validators/network";
 import { ValidatorTable } from "@/components/pages/validators/table";
 import { Spinner } from "@/components/ui/spinner";
 import { useValidators } from "@/hooks/use-validators";
@@ -23,6 +24,7 @@ export default function Home() {
     setShowAll,
     selectedValidator,
     setSelectedValidator,
+    networkStats,
   } = useValidators();
 
   const INITIAL_DISPLAY_COUNT = 10;
@@ -42,6 +44,11 @@ export default function Home() {
   return (
     <main className="mx-auto my-24 flex flex-col">
       <MaxWidthContainer>
+        {networkStats && (
+          <div className="mb-6">
+            <NetworkStatsCards stats={networkStats} />
+          </div>
+        )}
         <ValidatorFilters
           counts={counts}
           filters={{ search, filter, sort }}

@@ -39,3 +39,25 @@ export type FilterState = {
     direction: "asc" | "desc";
   };
 };
+
+export type ChainInfo = {
+  latestHeight: string;
+  chainId: string;
+  communityPool: {
+    denom: string;
+    amount: string;
+  }[];
+  totalSupply: {
+    denom: string;
+    amount: string;
+  }[];
+};
+
+export type NetworkStats = {
+  totalValidators: number;
+  activeValidators: number;
+  totalSupply: string;
+  communityPool: string;
+  latestHeight: string;
+  chainId: string;
+};

@@ -24,6 +24,8 @@ export function useValidators() {
     },
   );
 
+  const { data: chainInfo } = api.validator.getChainInfo.useQuery();
+
   // UI state
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<
@@ -51,22 +53,13 @@ export function useValidators() {
         .length ?? 0,
   };
   const validatorsWithUptime = useMemo(() => {
-    if (!validatorData?.validators || !signingData?.signingInfos) {
+    if (
+      !validatorData?.validators ||
+      !signingData?.signingInfos ||
+      !chainInfo
+    ) {
       return [];
     }
-
-    console.log(
-      "Available signing info addresses:",
-      signingData.signingInfos.map((info) => info.address),
-    );
-
-    // First, let's see what consensus pubkeys we have
-    validatorData.validators.forEach((validator) => {
-      console.log("Validator details:", {
-        operatorAddress: validator.operatorAddress,
-        consensusPubkey: validator.consensusPubkey,
-      });
-    });
 
     return validatorData.validators.map((validator) => {
       try {
@@ -80,10 +73,12 @@ export function useValidators() {
 
         return {
           ...validator,
+          signingInfo,
           uptime: signingInfo
             ? calculateUptime(
                 signingInfo.startHeight,
                 signingInfo.missedBlocksCounter,
+                chainInfo.latestHeight,
               )
             : undefined,
         };
@@ -91,11 +86,12 @@ export function useValidators() {
         console.error("Error matching validator:", error);
         return {
           ...validator,
+          signingInfo: undefined,
           uptime: undefined,
         };
       }
     });
-  }, [validatorData, signingData]);
+  }, [validatorData, signingData, chainInfo]);
 
   const filteredValidators = useMemo(() => {
     return validatorsWithUptime.filter((validator) => {
@@ -160,6 +156,20 @@ export function useValidators() {
     }));
   };
 
+  console.log("Chain Info from API:", chainInfo);
+
+  const stats = chainInfo
+    ? {
+        totalValidators: counts.all,
+        activeValidators: counts.active,
+        totalSupply: chainInfo.totalSupply[0]?.amount ?? "0",
+        communityPool: chainInfo.communityPool[0]?.amount ?? "0",
+        latestHeight: chainInfo.latestHeight,
+        chainId: chainInfo.chainId,
+      }
+    : undefined;
+  console.log("Transformed Network Stats:", stats);
+
   return {
     validators: sortedValidators ?? [],
     isLoading,
@@ -174,5 +184,6 @@ export function useValidators() {
     setShowAll,
     selectedValidator,
     setSelectedValidator,
+    networkStats: stats,
   };
 }
