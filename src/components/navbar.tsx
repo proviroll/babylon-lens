@@ -72,7 +72,7 @@ export function Navbar() {
                 rel="noopener noreferrer"
                 className="hover:text-primary"
               >
-                <Github className="h-5 w-5" />
+                <Github className="h-5 w-5 text-muted-foreground hover:text-foreground" />
               </a>
               <ThemeToggle />
             </div>
