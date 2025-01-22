@@ -1,29 +1,67 @@
-# Create T3 App
+# Babylon Lens
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+A modern dashboard for exploring and monitoring the Babylon blockchain testnet. Built as a public good by Proviroll.
 
-## What's next? How do I make an app with this?
+## Features
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- 🔍 **Validator Monitoring**: Track validator performance, commission rates, and uptime
+- 🔐 **Finality Provider Insights**: Monitor finality providers and their activities
+- 🌙 **Dark Mode Support**: Seamless dark/light theme switching
+- 📱 **Responsive Design**: Optimized for both desktop and mobile viewing
+- ⚡ **Real-time Updates**: Live data fetching using tRPC and React Query
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## Tech Stack
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+- **Framework**: Next.js 15
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui
+- **State Management**: React Query
+- **API Layer**: tRPC
+- **Protocol**: gRPC for blockchain communication
+- **Font**: Geist Sans
 
-## Learn More
+## Getting Started
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+1. Clone the repository:
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+```bash
+git clone https://github.com/proviroll/babylon-lens.git
+cd babylon-lens
+```
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+2. Install dependencies:
 
-## How do I deploy this?
+```bash
+npm install
+```
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+3. Start the development server
+
+```bash
+npm run dev
+```
+
+
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Development
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run format:write` - Format code with Prettier
+- `npm run typecheck` - Run TypeScript type checking
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+[MIT] - See LICENSE file for details
+
+## About
+
+Built and maintained by [Proviroll](https://proviroll.io). Follow us on [X](https://x.com/proviroll) for updates.
