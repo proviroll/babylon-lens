@@ -124,7 +124,13 @@ export function ValidatorTable({
                   <TableCell className="">
                     {formatTokens(validator.tokens)} BBN
                   </TableCell>
-                  <TableCell className="text-teal-600">
+                  <TableCell
+                    className={`${
+                      validator.uptime && Number(validator.uptime) < 99.98
+                        ? "text-red-500"
+                        : "text-teal-600"
+                    }`}
+                  >
                     {validator.uptime ? `${validator.uptime}%` : "N/A"}
                   </TableCell>
                   <TableCell className="">

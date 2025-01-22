@@ -29,10 +29,7 @@ export function Navbar() {
           </Link>
 
           <nav className="flex items-center gap-6 text-muted-foreground">
-            <Link
-              href="/overview"
-              className="text-sm font-medium hover:text-primary"
-            >
+            <Link href="/" className="text-sm font-medium hover:text-primary">
               Overview
             </Link>
             <Link

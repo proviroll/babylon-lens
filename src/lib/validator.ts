@@ -12,7 +12,7 @@ export const calculateUptime = (
   if (start === 0 || latest === 0) return "0";
 
   const blocksSinceStart = latest - start;
-  if (blocksSinceStart <= 0) return "100";
+  if (blocksSinceStart <= 0) return "0";
 
   const uptime = ((blocksSinceStart - missed) / blocksSinceStart) * 100;
   return uptime.toFixed(2);

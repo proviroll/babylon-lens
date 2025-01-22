@@ -195,7 +195,13 @@ export function ValidatorDetails({
             </div>
             <div>
               <Label>Missed Blocks</Label>
-              <div className="mt-1 font-mono">
+              <div
+                className={`mt-1 text-sm ${
+                  validator?.uptime && Number(validator.uptime) < 99.98
+                    ? "text-red-500"
+                    : ""
+                }`}
+              >
                 {validator?.signingInfo?.missedBlocksCounter ?? "N/A"}
               </div>
             </div>

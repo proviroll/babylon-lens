@@ -24,7 +24,7 @@ export function ValidatorGrid({
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:hidden">
         {validators.map((validator) => (
-          <Card key={validator.operatorAddress}>
+          <Card key={validator.operatorAddress} className="">
             <CardHeader>
               <CardTitle className="text-lg">
                 {validator.description.moniker}
@@ -35,11 +35,11 @@ export function ValidatorGrid({
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex justify-between">
-                <span>Voting Power</span>
-                <span>{formatTokens(validator.tokens)}</span>
+                <span className="text-muted-foreground">Tokens</span>
+                <span>{formatTokens(validator.tokens)} BBN</span>
               </div>
               <div className="flex justify-between">
-                <span>Commission</span>
+                <span className="text-muted-foreground">Commission</span>
                 <span>
                   {(
                     (Number(validator.commission.commissionRates.rate) / 1e18) *
@@ -49,12 +49,28 @@ export function ValidatorGrid({
                 </span>
               </div>
               <div className="flex justify-between">
-                <span>Uptime</span>
-                <span>{validator.uptime ? `${validator.uptime}%` : "N/A"}</span>
+                <span className="text-muted-foreground">Uptime</span>
+                <span
+                  className={`${
+                    validator.uptime && Number(validator.uptime) < 99.98
+                      ? "text-red-500"
+                      : "text-teal-600"
+                  }`}
+                >
+                  {validator.uptime ? `${validator.uptime}%` : "N/A"}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span>Status</span>
-                <span>
+                <span className="text-muted-foreground">Status</span>
+                <span
+                  className={`${
+                    validator.jailed
+                      ? "text-red-500"
+                      : validator.status === "BOND_STATUS_BONDED"
+                        ? "text-teal-600"
+                        : "text-muted-foreground"
+                  }`}
+                >
                   {validator.jailed
                     ? "Jailed"
                     : validator.status === "BOND_STATUS_BONDED"
