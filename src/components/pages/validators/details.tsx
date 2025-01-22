@@ -1,6 +1,5 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -62,7 +61,7 @@ export function ValidatorDetails({
               Operator Address
             </h3>
             <div className="mt-1 flex items-center gap-2">
-              <span className="font-mono text-sm text-blue-600">
+              <span className="font-mono text-sm text-sky-400">
                 {truncateAddress(validator?.operatorAddress ?? "")}
               </span>
               {validator && <CopyButton text={validator.operatorAddress} />}
@@ -86,7 +85,7 @@ export function ValidatorDetails({
               href={validator?.description.website}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 text-sm text-blue-600 hover:underline"
+              className="mt-1 text-sm text-sky-400 hover:underline"
             >
               {validator?.description.website ?? "No website provided"}
             </a>
@@ -121,12 +120,14 @@ export function ValidatorDetails({
               </h3>
               <p
                 className={`mt-1 text-sm ${
-                  validator?.uptime && Number(validator.uptime) < 99.98
-                    ? "text-red-500"
-                    : ""
+                  !validator?.uptime
+                    ? ""
+                    : Number(validator.uptime) < 99.98
+                      ? "text-red-500"
+                      : "text-teal-400"
                 }`}
               >
-                {validator?.uptime ? `${validator.uptime}%` : "N/A"}
+                {validator?.uptime ? `${validator.uptime}%` : "-"}
               </p>
             </div>
 
@@ -183,18 +184,22 @@ export function ValidatorDetails({
                   ? new Date(
                       Number(validator.commission.updateTime.seconds) * 1000,
                     ).toLocaleDateString()
-                  : "N/A"}
+                  : "-"}
               </p>
             </div>
 
             <div>
-              <Label>Start Height</Label>
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Start Height
+              </h3>
               <div className="mt-1 font-mono">
-                {validator?.signingInfo?.startHeight ?? "N/A"}
+                {validator?.signingInfo?.startHeight ?? "-"}
               </div>
             </div>
             <div>
-              <Label>Missed Blocks</Label>
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Missed Blocks
+              </h3>
               <div
                 className={`mt-1 text-sm ${
                   validator?.uptime && Number(validator.uptime) < 99.98
@@ -202,7 +207,7 @@ export function ValidatorDetails({
                     : ""
                 }`}
               >
-                {validator?.signingInfo?.missedBlocksCounter ?? "N/A"}
+                {validator?.signingInfo?.missedBlocksCounter ?? "-"}
               </div>
             </div>
           </div>

@@ -1,3 +1,4 @@
+import { finalityRouter } from "@/server/api/routers/finality-provider";
 import { validatorRouter } from "@/server/api/routers/validator";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 /**
@@ -7,6 +8,7 @@ import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
  */
 export const appRouter = createTRPCRouter({
   validator: validatorRouter,
+  finality: finalityRouter,
 });
 
 // export type definition of API

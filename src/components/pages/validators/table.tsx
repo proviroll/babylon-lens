@@ -116,7 +116,7 @@ export function ValidatorTable({
                     {validator.description.moniker}
                   </TableCell>
                   <TableCell className="font-mono text-sm">
-                    <div className="flex max-w-sm items-center gap-2 truncate text-teal-600">
+                    <div className="flex max-w-sm items-center gap-2 truncate text-sky-400">
                       {truncateAddress(validator.operatorAddress)}
                       <CopyButton text={validator.operatorAddress} />
                     </div>
@@ -126,12 +126,14 @@ export function ValidatorTable({
                   </TableCell>
                   <TableCell
                     className={`${
-                      validator.uptime && Number(validator.uptime) < 99.98
-                        ? "text-red-500"
-                        : "text-teal-600"
+                      !validator.uptime
+                        ? "pl-8 text-muted-foreground"
+                        : Number(validator.uptime) < 99.98
+                          ? "text-red-500"
+                          : "text-teal-600"
                     }`}
                   >
-                    {validator.uptime ? `${validator.uptime}%` : "N/A"}
+                    {validator.uptime ? `${validator.uptime}%` : "-"}
                   </TableCell>
                   <TableCell className="">
                     {(

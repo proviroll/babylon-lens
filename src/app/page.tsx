@@ -1,6 +1,6 @@
 "use client";
 import { MaxWidthContainer } from "@/components/max-width-container";
-import { NetworkStatsCards } from "@/components/pages/validators/network";
+import { NetworkStatsCards } from "@/components/pages/overview/network";
 import { Spinner } from "@/components/ui/spinner";
 import { useValidators } from "@/hooks/use-validators";
 

@@ -57,7 +57,7 @@ export function ValidatorGrid({
                       : "text-teal-600"
                   }`}
                 >
-                  {validator.uptime ? `${validator.uptime}%` : "N/A"}
+                  {validator.uptime ? `${validator.uptime}%` : "-"}
                 </span>
               </div>
               <div className="flex justify-between">
