@@ -1,13 +1,14 @@
-import { postRouter } from "@/server/api/routers/post";
+import { finalityRouter } from "@/server/api/routers/finality-provider";
+import { validatorRouter } from "@/server/api/routers/validator";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
-
 /**
  * This is the primary router for your server.
  *
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  post: postRouter,
+  validator: validatorRouter,
+  finality: finalityRouter,
 });
 
 // export type definition of API

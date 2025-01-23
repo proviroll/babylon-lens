@@ -1,53 +1,88 @@
-import Link from "next/link";
+"use client";
 
-import { LatestPost } from "@/app/_components/post";
-import { api, HydrateClient } from "@/trpc/server";
+import { MaxWidthContainer } from "@/components/max-width-container";
+import { NetworkStatsCards } from "@/components/pages/overview/network";
+import { ValidatorDetails } from "@/components/pages/validators/details";
+import { ValidatorFilters } from "@/components/pages/validators/filters";
+import { ValidatorGrid } from "@/components/pages/validators/grid";
+import { ValidatorTable } from "@/components/pages/validators/table";
+import { Spinner } from "@/components/ui/spinner";
+import { useValidators } from "@/hooks/use-validators";
+import { formatTokens, truncateAddress } from "@/lib/formatting";
+import { type NetworkStats } from "@/types/validator";
 
-export default async function Home() {
-  const hello = await api.post.hello({ text: "from tRPC" });
+export default function ValidatorsPage() {
+  const {
+    validators,
+    isLoading,
+    counts,
+    search,
+    setSearch,
+    filter,
+    setFilter,
+    sort,
+    toggleSort,
+    showAll,
+    setShowAll,
+    selectedValidator,
+    setSelectedValidator,
+    networkStats,
+  } = useValidators();
 
-  void api.post.getLatest.prefetch();
+  const INITIAL_DISPLAY_COUNT = 10;
+
+  if (isLoading) {
+    return (
+      <main className="mx-auto my-24 flex flex-col">
+        <MaxWidthContainer>
+          <div className="flex h-[50vh] items-center justify-center">
+            <Spinner className="h-8 w-8 text-primary" />
+          </div>
+        </MaxWidthContainer>
+      </main>
+    );
+  }
 
   return (
-    <HydrateClient>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-        <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-          <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
-            Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
-          </h1>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/usage/first-steps"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">First Steps →</h3>
-              <div className="text-lg">
-                Just the basics - Everything you need to know to set up your
-                database and authentication.
-              </div>
-            </Link>
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/introduction"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">Documentation →</h3>
-              <div className="text-lg">
-                Learn more about Create T3 App, the libraries it uses, and how
-                to deploy it.
-              </div>
-            </Link>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-2xl text-white">
-              {hello ? hello.greeting : "Loading tRPC query..."}
-            </p>
-          </div>
+    <main className="mx-auto my-24 flex flex-col">
+      <MaxWidthContainer>
+        {networkStats && (
+          <NetworkStatsCards stats={networkStats as unknown as NetworkStats} />
+        )}
+        <ValidatorFilters
+          counts={counts}
+          filters={{ search, filter, sort }}
+          onFiltersChange={(filters) => {
+            setSearch(filters.search);
+            setFilter(filters.filter);
+          }}
+        />
+        <ValidatorTable
+          validators={validators}
+          isLoading={isLoading}
+          showAll={showAll}
+          onShowAllChange={setShowAll}
+          onValidatorSelect={setSelectedValidator}
+          toggleSort={toggleSort}
+          formatTokens={formatTokens}
+          truncateAddress={truncateAddress}
+          INITIAL_DISPLAY_COUNT={INITIAL_DISPLAY_COUNT}
+        />
 
-          <LatestPost />
-        </div>
-      </main>
-    </HydrateClient>
+        <ValidatorDetails
+          validator={selectedValidator}
+          onClose={() => setSelectedValidator(null)}
+          truncateAddress={truncateAddress}
+          formatTokens={formatTokens}
+        />
+        <ValidatorGrid
+          validators={validators}
+          isLoading={isLoading}
+          showAll={showAll}
+          onShowAllChange={setShowAll}
+          onValidatorSelect={setSelectedValidator}
+        />
+      </MaxWidthContainer>
+    </main>
   );
 }
