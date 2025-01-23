@@ -7,7 +7,7 @@ import { ValidatorGrid } from "@/components/pages/validators/grid";
 import { ValidatorTable } from "@/components/pages/validators/table";
 import { Spinner } from "@/components/ui/spinner";
 import { useValidators } from "@/hooks/use-validators";
-import { calculateAPY, formatTokens, truncateAddress } from "@/lib/formatting";
+import { formatTokens, truncateAddress } from "@/lib/formatting";
 
 export default function ValidatorsPage() {
   const {
@@ -68,13 +68,13 @@ export default function ValidatorsPage() {
           onClose={() => setSelectedValidator(null)}
           truncateAddress={truncateAddress}
           formatTokens={formatTokens}
-          calculateAPY={calculateAPY}
         />
         <ValidatorGrid
           validators={validators}
           isLoading={isLoading}
           showAll={showAll}
           onShowAllChange={setShowAll}
+          onValidatorSelect={setSelectedValidator}
         />
       </MaxWidthContainer>
     </main>

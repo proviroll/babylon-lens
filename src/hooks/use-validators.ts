@@ -65,7 +65,7 @@ export function useValidators() {
       try {
         const consensusAddr = operatorToConsensusAddress(
           validator.operatorAddress,
-          validator.consensusPubkey,
+          validator.consensusPubkey ?? { typeUrl: "", value: "" },
         );
         const signingInfo = signingData.signingInfos.find(
           (info) => info.address === consensusAddr,

@@ -1,9 +1,10 @@
+/* eslint-disable */
 import * as grpc from "@grpc/grpc-js";
 import { finalityProviderProto } from "../proto/finality-provider";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 const root = finalityProviderProto;
-const grpcUrl = process.env.BABYLON_GRPC_URL;
+const grpcUrl = process.env.BABYLON_GRPC_URL!;
 
 export const finalityRouter = createTRPCRouter({
   getAll: publicProcedure.query(async () => {

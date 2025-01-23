@@ -3,6 +3,7 @@ import { MaxWidthContainer } from "@/components/max-width-container";
 import { NetworkStatsCards } from "@/components/pages/overview/network";
 import { Spinner } from "@/components/ui/spinner";
 import { useValidators } from "@/hooks/use-validators";
+import type { Coin } from "@/types/validator";
 
 export default function Home() {
   const { isLoading, networkStats } = useValidators();
@@ -24,7 +25,14 @@ export default function Home() {
       <MaxWidthContainer>
         {networkStats && (
           <div className="mb-6">
-            <NetworkStatsCards stats={networkStats} />
+            {/* ! TODO: fix typing */}
+            <NetworkStatsCards
+              stats={{
+                ...networkStats,
+                totalSupply: networkStats.totalSupply as unknown as Coin[],
+                communityPool: networkStats.communityPool as unknown as Coin[],
+              }}
+            />
           </div>
         )}
       </MaxWidthContainer>

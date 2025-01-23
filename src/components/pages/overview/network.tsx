@@ -51,12 +51,14 @@ export function NetworkStatsCards({ stats }: NetworkStatsProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatTokens(stats.totalSupply)} BBN
+              {formatTokens(stats.totalSupply[0]?.amount ?? "0")} BBN
             </div>
             <div className="mt-4 space-y-2">
               <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">Community Pool</span>
-                <span>{formatTokens(stats.communityPool)} BBN</span>
+                <span>
+                  {formatTokens(stats.communityPool[0]?.amount ?? "0")} BBN
+                </span>
               </div>
             </div>
           </CardContent>

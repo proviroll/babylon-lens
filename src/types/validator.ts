@@ -20,7 +20,11 @@ export type Validator = {
   };
   jailed: boolean;
   uptime?: string;
-  consensusPubkey?: string;
+  consensusPubkey?: {
+    typeUrl: string;
+    value: string;
+  };
+  signingInfo?: ValidatorSigningInfo;
 };
 
 export type ValidatorData = {
@@ -56,8 +60,38 @@ export type ChainInfo = {
 export type NetworkStats = {
   totalValidators: number;
   activeValidators: number;
-  totalSupply: string;
-  communityPool: string;
+  totalSupply: Coin[];
+  communityPool: Coin[];
   latestHeight: string;
   chainId: string;
 };
+
+export type ValidatorSigningInfo = {
+  address: string;
+  startHeight: string;
+  indexOffset: string;
+  jailedUntil: string;
+  missedBlocksCounter: string;
+};
+
+export type SigningInfoResponse = {
+  info: ValidatorSigningInfo[];
+  pagination: {
+    nextKey: null;
+  };
+};
+
+export type Coin = {
+  denom: string;
+  amount: string;
+};
+
+export type BlockData = {
+  block?: {
+    header: {
+      height: string;
+      chainId: string;
+    };
+  };
+};
+  

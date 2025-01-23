@@ -8,7 +8,4 @@ export const formatTokens = (tokens: string) => {
   return new Intl.NumberFormat("en-US").format(amount);
 };
 
-export const calculateAPY = (commission: string) => {
-  const rate = Number(commission) / 1e18;
-  return ((1 - rate) * 0.12 * 100).toFixed(2);
-};
+

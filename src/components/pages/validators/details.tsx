@@ -15,7 +15,6 @@ interface ValidatorDetailsProps {
   onClose: () => void;
   truncateAddress: (address: string) => string;
   formatTokens: (tokens: string) => string;
-  calculateAPY: (commission: string) => string;
 }
 
 const CopyButton = ({ text }: { text: string }) => {
@@ -46,7 +45,6 @@ export function ValidatorDetails({
   onClose,
   truncateAddress,
   formatTokens,
-  calculateAPY,
 }: ValidatorDetailsProps) {
   return (
     <Sheet open={!!validator} onOpenChange={onClose}>

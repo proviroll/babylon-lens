@@ -1,18 +1,16 @@
 import { validatorProto } from "@/server/api/proto/validator";
-import { type Validator } from "@/types/validator";
+import type {
+  BlockData,
+  Coin,
+  SigningInfoResponse,
+  Validator,
+  ValidatorSigningInfo,
+} from "@/types/validator";
 import * as grpc from "@grpc/grpc-js";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 const root = validatorProto.root;
-const grpcUrl = process.env.BABYLON_GRPC_URL;
-
-type ValidatorSigningInfo = {
-  address: string;
-  startHeight: string;
-  indexOffset: string;
-  jailedUntil: string; // You can define a more specific type if needed
-  missedBlocksCounter: string;
-};
+const grpcUrl = process.env.BABYLON_GRPC_URL!;
 
 export const validatorRouter = createTRPCRouter({
   getAll: publicProcedure.query(async () => {
@@ -120,7 +118,7 @@ export const validatorRouter = createTRPCRouter({
         enums: String,
         bytes: String,
         defaults: true,
-      });
+      }) as SigningInfoResponse; // Cast to the defined type
 
       console.log(
         "Raw signing infos response:",
@@ -248,29 +246,29 @@ export const validatorRouter = createTRPCRouter({
         longs: String,
         enums: String,
         bytes: String,
-      });
+      }) as BlockData;
       const jsonPoolData = PoolResponseType.toObject(poolData, {
         longs: String,
         enums: String,
         bytes: String,
-      });
+      }) as { pool: Coin[] };
       const jsonSupplyData = SupplyResponseType.toObject(supplyData, {
         longs: String,
         enums: String,
         bytes: String,
-      });
+      }) as { supply: Coin[] };
       console.log({ jsonBlockData, jsonPoolData, jsonSupplyData });
 
       return {
         latestHeight: jsonBlockData.block?.header?.height ?? "0",
         chainId: jsonBlockData.block?.header?.chainId ?? "unknown",
         communityPool:
-          jsonPoolData.pool?.map((coin: any) => ({
+          jsonPoolData.pool?.map((coin: Coin) => ({
             denom: coin.denom,
             amount: coin.amount,
           })) ?? [],
         totalSupply:
-          jsonSupplyData.supply?.map((coin: any) => ({
+          jsonSupplyData.supply?.map((coin: Coin) => ({
             denom: coin.denom,
             amount: coin.amount,
           })) ?? [],

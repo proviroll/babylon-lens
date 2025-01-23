@@ -6,7 +6,7 @@ export const operatorToConsensusAddress = (
   consensusPubkey: { typeUrl: string; value: string },
 ): string => {
   try {
-    if (!consensusPubkey || !consensusPubkey.value) {
+    if (!consensusPubkey) {
       console.error("Missing consensus pubkey");
       return "";
     }
