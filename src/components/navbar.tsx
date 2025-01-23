@@ -42,10 +42,7 @@ export function Navbar() {
 
             {/* Desktop Navigation */}
             <nav className="hidden items-center gap-6 text-muted-foreground md:flex">
-              <Link
-                href="/validators"
-                className="text-sm font-medium hover:text-primary"
-              >
+              <Link href="/" className="text-sm font-medium hover:text-primary">
                 Validators
               </Link>
               <button
