@@ -118,7 +118,7 @@ export const validatorRouter = createTRPCRouter({
         enums: String,
         bytes: String,
         defaults: true,
-      }) as SigningInfoResponse; // Cast to the defined type
+      }) as SigningInfoResponse; 
 
       console.log(
         "Raw signing infos response:",

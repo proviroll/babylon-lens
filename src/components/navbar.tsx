@@ -70,7 +70,7 @@ export function Navbar() {
                 href="https://github.com/babylonchain"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-primary"
+                className="text-muted-foreground hover:text-primary"
               >
                 <Github className="h-5 w-5" />
               </a>

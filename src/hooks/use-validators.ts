@@ -162,8 +162,8 @@ export function useValidators() {
     ? {
         totalValidators: counts.all,
         activeValidators: counts.active,
-        totalSupply: chainInfo.totalSupply[0]?.amount ?? "0",
-        communityPool: chainInfo.communityPool[0]?.amount ?? "0",
+        totalSupply: chainInfo.totalSupply,
+        communityPool: chainInfo.communityPool,
         latestHeight: chainInfo.latestHeight,
         chainId: chainInfo.chainId,
       }

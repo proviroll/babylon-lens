@@ -66,7 +66,7 @@ export function ValidatorTable({
 
   return (
     <div className="hidden lg:block">
-      <div className="rounded-md border">
+      <div className="rounded-md border bg-card p-2">
         <Table>
           <TableHeader>
             <TableRow>
@@ -82,7 +82,7 @@ export function ValidatorTable({
                 className="w-[250px] cursor-pointer hover:text-foreground"
                 onClick={() => toggleSort("tokens")}
               >
-                Tokens
+                Voting Power
                 <ArrowUpDown className="ml-1 inline h-3.5 w-3.5" />
               </TableHead>
               <TableHead
@@ -122,7 +122,7 @@ export function ValidatorTable({
                     </div>
                   </TableCell>
                   <TableCell className="">
-                    {formatTokens(validator.tokens)} BBN
+                    {formatTokens(validator.tokens)}
                   </TableCell>
                   <TableCell
                     className={`${
@@ -182,7 +182,7 @@ export function ValidatorTable({
       </div>
 
       {validators.length > INITIAL_DISPLAY_COUNT && (
-        <div className="mt-4 flex w-full justify-center border border-[1px] border-foreground/10 py-2">
+        <div className="mt-4 flex w-full justify-center border border-[1px] border-foreground/10 bg-card py-2">
           <button
             onClick={() => onShowAllChange(!showAll)}
             className="text-sm text-primary hover:underline dark:text-muted-foreground"
